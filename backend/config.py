@@ -3,12 +3,18 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # AWS (for DynamoDB only)
+    # AWS
     aws_region: str = "us-east-1"
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
 
-    # Groq API (LLM + Whisper)
+    # LLM Provider Toggle: "bedrock" or "groq"
+    llm_provider: str = "bedrock"
+
+    # Bedrock (Nvidia Nemotron)
+    bedrock_model_id: str = "nvidia.nemotron-super-3-120b"
+
+    # Groq API (LLM + Whisper — backup)
     groq_api_key: str = ""
     groq_llm_model: str = "llama-3.3-70b-versatile"
 

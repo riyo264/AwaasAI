@@ -1,8 +1,10 @@
 """
-Action Engine — Groq LLaMA 3.3 70B powered.
+Action Engine — Dual-provider LLM powered.
+
+Primary: AWS Bedrock (Nvidia Nemotron Super 3 120B)
+Backup:  Groq (LLaMA 3.3 70B)
 
 Takes ALL signals (voice, behavior, patterns) and decides device actions.
-Groq free tier: 30 RPM, 14,400 requests/day — plenty for our use case.
 """
 
 import json
@@ -90,12 +92,17 @@ Respond with JSON only:
 
 
 class ActionEngine:
-    """Groq LLaMA-powered action decision engine."""
+    """Dual-provider action decision engine: Bedrock primary, Groq backup."""
 
     def __init__(self):
-        self.api_key = settings.groq_api_key
-        self.model = settings.groq_llm_model
-        logger.info(f"Action Engine initialized: model={self.model}")
+        self.provider = settings.llm_provider  # "bedrock" or "groq"
+        self.bedrock_model_id = settings.bedrock_model_id
+        self.groq_api_key = settings.groq_api_key
+        self.groq_model = settings.groq_llm_model
+        logger.info(
+            f"Action Engine initialized: provider={self.provider}, "
+            f"bedrock_model={self.bedrock_model_id}, groq_model={self.groq_model}"
+        )
 
     async def decide_actions(
         self,
@@ -108,18 +115,128 @@ class ActionEngine:
         room_id: str = "living-room",
         time_of_day: Optional[str] = None,
     ) -> dict:
-        """Send all signals to Groq LLM and get actions back."""
-        if not self.api_key:
-            logger.warning("GROQ_API_KEY not set, using fallback")
-            return self._fallback_decision()
-
+        """Send all signals to LLM and get actions back. Bedrock first, Groq fallback."""
         user_context = self._build_context(
             mood, mood_confidence, speech_text, speech_features,
             behavior_result, pattern_context, room_id, time_of_day,
         )
 
+        # Try primary provider
+        if self.provider == "bedrock":
+            result = await self._call_bedrock(user_context)
+            if result:
+                return result
+            # Bedrock failed — try Groq as backup
+            logger.warning("Bedrock failed, falling back to Groq")
+            result = await self._call_groq(user_context)
+            if result:
+                return result
+        else:
+            # Provider is "groq" — try Groq first, Bedrock backup
+            result = await self._call_groq(user_context)
+            if result:
+                return result
+            logger.warning("Groq failed, falling back to Bedrock")
+            result = await self._call_bedrock(user_context)
+            if result:
+                return result
+
+        # Both failed
+        logger.error("Both Bedrock and Groq unavailable, using fallback")
+        return self._fallback_decision()
+
+    # ─── Bedrock (Nvidia Nemotron) ───────────────────────────────────────────
+
+    async def _call_bedrock(self, user_context: str) -> Optional[dict]:
+        """Call AWS Bedrock with the Converse API."""
+        try:
+            import boto3
+
+            client = boto3.client(
+                "bedrock-runtime",
+                region_name=settings.aws_region,
+                aws_access_key_id=settings.aws_access_key_id,
+                aws_secret_access_key=settings.aws_secret_access_key,
+            )
+
+            # Use the Converse API (works with all Bedrock models)
+            response = await self._invoke_bedrock_converse(client, user_context)
+            return response
+
+        except ImportError:
+            logger.error("boto3 not installed — cannot use Bedrock")
+            return None
+        except Exception as e:
+            logger.error(f"Bedrock Action Engine error: {type(e).__name__}: {e}")
+            return None
+
+    async def _invoke_bedrock_converse(self, client, user_context: str) -> Optional[dict]:
+        """Invoke Bedrock Converse API in a thread (boto3 is sync)."""
+        import asyncio
+
+        def _sync_call():
+            response = client.converse(
+                modelId=self.bedrock_model_id,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"text": f"{ACTION_ENGINE_PROMPT}\n\n---\n\n{user_context}"}
+                        ],
+                    }
+                ],
+                inferenceConfig={
+                    "temperature": 0.4,
+                    "maxTokens": 1024,
+                },
+            )
+            # Extract text from Converse response
+            output = response.get("output", {})
+            message = output.get("message", {})
+            content_blocks = message.get("content", [])
+            text = ""
+            for block in content_blocks:
+                if "text" in block:
+                    text = block["text"]
+                    break
+
+            if not text:
+                return None
+
+            # Parse JSON from the response (handle markdown code blocks)
+            text = text.strip()
+            if text.startswith("```"):
+                # Strip ```json ... ``` wrapper
+                lines = text.split("\n")
+                lines = lines[1:]  # remove opening ```json
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                text = "\n".join(lines)
+
+            return json.loads(text)
+
+        try:
+            result = await asyncio.to_thread(_sync_call)
+            if result:
+                logger.info(f"Bedrock Action Engine: {result.get('mood_assessment', '')[:60]}")
+            return result
+        except json.JSONDecodeError as e:
+            logger.error(f"Bedrock returned invalid JSON: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Bedrock Converse error: {type(e).__name__}: {e}")
+            return None
+
+    # ─── Groq (Backup) ───────────────────────────────────────────────────────
+
+    async def _call_groq(self, user_context: str) -> Optional[dict]:
+        """Call Groq API as backup provider."""
+        if not self.groq_api_key:
+            logger.warning("GROQ_API_KEY not set, skipping Groq")
+            return None
+
         payload = {
-            "model": self.model,
+            "model": self.groq_model,
             "messages": [
                 {"role": "system", "content": ACTION_ENGINE_PROMPT},
                 {"role": "user", "content": user_context},
@@ -134,7 +251,7 @@ class ActionEngine:
                 response = await client.post(
                     GROQ_CHAT_URL,
                     headers={
-                        "Authorization": f"Bearer {self.api_key}",
+                        "Authorization": f"Bearer {self.groq_api_key}",
                         "Content-Type": "application/json",
                     },
                     json=payload,
@@ -142,17 +259,19 @@ class ActionEngine:
 
                 if response.status_code != 200:
                     logger.error(f"Groq Action Engine error: {response.status_code} - {response.text}")
-                    return self._fallback_decision()
+                    return None
 
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
                 parsed = json.loads(content)
-                logger.info(f"Action Engine: {parsed.get('mood_assessment', '')[:60]}")
+                logger.info(f"Groq Action Engine: {parsed.get('mood_assessment', '')[:60]}")
                 return parsed
 
         except Exception as e:
-            logger.error(f"Action Engine error: {type(e).__name__}: {e}")
-            return self._fallback_decision()
+            logger.error(f"Groq Action Engine error: {type(e).__name__}: {e}")
+            return None
+
+    # ─── Context Builder ─────────────────────────────────────────────────────
 
     def _build_context(self, mood, mood_confidence, speech_text, speech_features,
                        behavior_result, pattern_context, room_id, time_of_day) -> str:
@@ -204,7 +323,7 @@ class ActionEngine:
 
     def _fallback_decision(self) -> dict:
         return {
-            "mood_assessment": "Fallback — LLM unavailable",
+            "mood_assessment": "Fallback — both LLM providers unavailable",
             "detected_mood": "neutral",
             "cognitive_load": "moderate",
             "confidence": 0.3,
@@ -216,8 +335,8 @@ class ActionEngine:
                 "music_volume": 0,
                 "notification_mode": "normal",
             },
-            "alexa_response": "I'm having trouble right now. Settings are at default.",
-            "reasoning": "Fallback: LLM unavailable",
+            "alexa_response": "I'm having trouble reaching my AI services. Settings are at default.",
+            "reasoning": "Fallback: both Bedrock and Groq unavailable",
         }
 
 
