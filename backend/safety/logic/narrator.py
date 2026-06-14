@@ -19,7 +19,7 @@ import asyncio
 import json
 import logging
 import re
-
+import functools
 import boto3
 import httpx
 
@@ -28,6 +28,26 @@ from safety.models.context import ContextObject, ContextType
 
 logger = logging.getLogger(__name__)
 
+@functools.lru_cache(maxsize=1)
+def _verify_ctx():
+    """TLS verification for outbound LLM calls.
+
+    Behind a corporate TLS-intercepting proxy the proxy's root CA lives in the
+    OS trust store but NOT in certifi's bundle, so httpx's default verification
+    fails with CERTIFICATE_VERIFY_FAILED and the narrator silently falls back to
+    templated text. ``truststore`` builds an SSLContext backed by the OS trust
+    store, fixing this. We scope it to the httpx client only (never the global
+    ssl module) so boto3/DynamoDB is unaffected. Falls back to httpx's default
+    (``True``) when truststore is unavailable or the platform has no OS store.
+    """
+    try:
+        import ssl
+
+        import truststore
+
+        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    except Exception:  # pragma: no cover - default verification is fine
+        return True
 
 SYSTEM_PROMPT = """You are Alexa, the guardian voice of a home SAFETY system that protects a
 vulnerable person living at home (an elderly person, a child alone, a pregnant

@@ -22,12 +22,32 @@ import re
 
 import boto3
 import httpx
-
+import functools
 from patterns.app.config import get_settings
 from patterns.models.context import ContextObject, ContextType
 
 logger = logging.getLogger(__name__)
 
+@functools.lru_cache(maxsize=1)
+def _verify_ctx():
+    """TLS verification for outbound LLM calls.
+
+    Behind a corporate TLS-intercepting proxy the proxy's root CA lives in the
+    OS trust store but NOT in certifi's bundle, so httpx's default verification
+    fails with CERTIFICATE_VERIFY_FAILED and the narrator silently falls back to
+    templated text. ``truststore`` builds an SSLContext backed by the OS trust
+    store, fixing this. We scope it to the httpx client only (never the global
+    ssl module) so boto3/DynamoDB is unaffected. Falls back to httpx's default
+    (``True``) when truststore is unavailable or the platform has no OS store.
+    """
+    try:
+        import ssl
+
+        import truststore
+
+        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    except Exception:  # pragma: no cover - default verification is fine
+        return True
 
 SYSTEM_PROMPT = """You are Alexa, the voice and reasoning engine of a calm, helpful smart-home assistant.
 
@@ -478,7 +498,7 @@ async def _call_groq(system: str, user_msg: str, settings) -> dict | None:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=settings.narrator_timeout_seconds) as client:
+        async with httpx.AsyncClient(timeout=settings.narrator_timeout_seconds, verify = _verify_ctx()) as client:
             resp = await client.post(
                 settings.groq_chat_url,
                 headers={

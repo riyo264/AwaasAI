@@ -174,7 +174,66 @@ def generate(
 
     # Always seed this morning's normal wake so the home isn't trivially "silent"
     # unless we are explicitly demoing inactivity.
+    
+    def _today_at(hour: int, minute: int) -> datetime:
+        return today.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+    def _seed_past(device_id, device_type, room, action, hour, minute, by="system"):
+        """Seed a momentary routine event for TODAY only when its usual time has
+        already passed. This is what stops ordinary morning/daytime routines from
+        being mis-read as 'missed' (medicine, activity, pooja, …) when the
+        dashboard is viewed at the real wall-clock."""
+        ts = _today_at(hour, minute)
+        if ts <= now:
+            add(device_id, device_type, room, action, ts, by)
+    
+    
     if not include_inactivity:
+        _seed_past("grandpa_activity", DeviceType.ACTIVITY, "bedroom", DeviceAction.ACTIVE, 6, 30, "grandpa")
+        _seed_past("grandma_activity", DeviceType.ACTIVITY, "bedroom", DeviceAction.ACTIVE, 6, 40, "grandma")
+        _seed_past("grandpa_activity", DeviceType.ACTIVITY, "balcony", DeviceAction.ACTIVE, 7, 0, "grandpa")
+
+        # Morning pooja (lamp -> bell -> bhajan) — seeded only if fully past so we
+        # never leave the lamp 'on'.
+        if _today_at(7, 57) <= now:
+            add("pooja_lamp", DeviceType.LIGHT, "pooja_room", DeviceAction.ON, _today_at(7, 30), "grandma")
+            add("temple_bell", DeviceType.OTHER, "pooja_room", DeviceAction.ON, _today_at(7, 31), "grandma")
+            add("bhajan_speaker", DeviceType.OTHER, "pooja_room", DeviceAction.ON, _today_at(7, 32), "grandma")
+            add("pooja_lamp", DeviceType.LIGHT, "pooja_room", DeviceAction.OFF, _today_at(7, 55), "grandma")
+            add("temple_bell", DeviceType.OTHER, "pooja_room", DeviceAction.OFF, _today_at(7, 56), "grandma")
+            add("bhajan_speaker", DeviceType.OTHER, "pooja_room", DeviceAction.OFF, _today_at(7, 57), "grandma")
+
+        _seed_past("kitchen_activity", DeviceType.ACTIVITY, "kitchen", DeviceAction.ACTIVE, 8, 0, "grandma")
+        _seed_past("grandpa_medicine", DeviceType.MEDICINE, "bedroom", DeviceAction.TAKEN, 9, 0, "grandpa")
+        _seed_past("grandma_medicine", DeviceType.MEDICINE, "bedroom", DeviceAction.TAKEN, 9, 15, "grandma")
+
+        # Water motor ~15 min (skipped when demoing the motor anomaly).
+        if not include_motor_anomaly and _today_at(9, 45) <= now:
+            add("water_motor", DeviceType.MOTOR, "utility", DeviceAction.ON, _today_at(9, 30))
+            add("water_motor", DeviceType.MOTOR, "utility", DeviceAction.OFF, _today_at(9, 45))
+
+        _seed_past("living_activity", DeviceType.ACTIVITY, "living_room", DeviceAction.ACTIVE, 13, 0, "grandpa")
+
+        # Evening walk (door open -> close).
+        if _today_at(17, 2) <= now:
+            add("main_door", DeviceType.DOOR, "entrance", DeviceAction.OPEN, _today_at(17, 0), "grandpa")
+            add("main_door", DeviceType.DOOR, "entrance", DeviceAction.CLOSE, _today_at(17, 2), "grandpa")
+
+        # Dinner on the gas stove (skipped when demoing gas-left-on).
+        if not include_gas_left_on and _today_at(19, 50) <= now:
+            add("kitchen_gas_stove", DeviceType.GAS, "kitchen", DeviceAction.ON, _today_at(19, 30), "grandma")
+            add("kitchen_gas_stove", DeviceType.GAS, "kitchen", DeviceAction.OFF, _today_at(19, 50), "grandma")
+
+        # Living-room light (ON 18:30 -> OFF 22:00) — seed only once fully past.
+        if _today_at(22, 0) <= now:
+            add("living_room_light", DeviceType.LIGHT, "living_room", DeviceAction.ON, _today_at(18, 30))
+            add("living_room_light", DeviceType.LIGHT, "living_room", DeviceAction.OFF, _today_at(22, 0))
+
+        _seed_past("grandpa_medicine", DeviceType.MEDICINE, "bedroom", DeviceAction.TAKEN, 21, 0, "grandpa")
+        _seed_past("grandma_medicine", DeviceType.MEDICINE, "bedroom", DeviceAction.TAKEN, 21, 15, "grandma")
+
+        # A fresh sign of life in the last half hour so a normal home is never
+        # trivially flagged as inactive.
         add("grandpa_activity", DeviceType.ACTIVITY, "bedroom", DeviceAction.ACTIVE,
             now - timedelta(minutes=30), triggered_by="grandpa")
 
