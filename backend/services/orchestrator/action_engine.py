@@ -10,7 +10,7 @@ Takes ALL signals (voice, behavior, patterns) and decides device actions.
 import json
 import logging
 from typing import Optional
-
+import functools
 import httpx
 
 import sys
@@ -19,6 +19,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+@functools.lru_cache(maxsize=1)
+def _verify_ctx():
+    """TLS verification for outbound Groq calls.
+
+    Behind a corporate TLS-intercepting proxy the proxy's root CA lives in the
+    OS trust store but NOT in certifi's bundle, so httpx's default verification
+    fails with CERTIFICATE_VERIFY_FAILED and the action engine silently falls
+    back to preset logic. ``truststore`` builds an SSLContext backed by the OS
+    trust store. Scoped to the httpx client only (never the global ssl module)
+    so boto3 is unaffected. Falls back to httpx's default when unavailable.
+    """
+    try:
+        import ssl
+
+        import truststore
+
+        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    except Exception:  # pragma: no cover - default verification is fine
+        return True
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -247,7 +267,7 @@ class ActionEngine:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=20.0, verify = _verify_ctx()) as client:
                 response = await client.post(
                     GROQ_CHAT_URL,
                     headers={

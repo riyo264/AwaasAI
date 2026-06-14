@@ -13,18 +13,24 @@ export default function Layout() {
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <aside className="w-64 bg-gray-900 border-r border-gray-800 p-6 flex flex-col">
-        <div className="mb-8">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Brain className="w-6 h-6 text-indigo-400" />
-            MoodSense AI
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">Smart Environment Control</p>
+        <div className="mb-8 flex items-center gap-3">
+          <img
+            src="/Amazon_Alexa_blue_logo.svg"
+            alt="Amazon Alexa"
+            className="h-8 w-8 shrink-0"
+          />
+          <div>
+            <h1 className="text-lg font-bold text-white leading-tight">
+              Awaas AI
+            </h1>
+            <p className="text-[13px] text-gray-500">Powered by Amazon Alexa</p>
+          </div>
         </div>
 
         <nav className="flex flex-col gap-2">
           <NavLink to="/" className={linkClass}>
             <Brain className="w-4 h-4" />
-            Dashboard
+            Mood
           </NavLink>
           <NavLink to="/patterns" className={linkClass}>
             <Network className="w-4 h-4" />
@@ -45,7 +51,7 @@ export default function Layout() {
         </nav>
 
         <div className="mt-auto pt-4 border-t border-gray-800">
-          <p className="text-xs text-gray-600">Powered by Voxtral on Bedrock</p>
+          <p className="text-xs text-gray-600">Powered by Nvidia Nemotron on AWS Bedrock</p>
         </div>
       </aside>
 
