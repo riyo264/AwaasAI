@@ -5,6 +5,7 @@ Primary: AWS Bedrock (Nvidia Nemotron Super 3 120B)
 Backup:  Groq (LLaMA 3.3 70B)
 
 Takes ALL signals (voice, behavior, patterns) and decides device actions.
+Includes response caching to save tokens on repetitive inputs.
 """
 
 import json
@@ -17,6 +18,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from config import settings
+from services.llm_cache import action_cache, make_cache_key
 
 logger = logging.getLogger(__name__)
 
@@ -121,24 +123,35 @@ class ActionEngine:
             behavior_result, pattern_context, room_id, time_of_day,
         )
 
+        # Check cache first — identical context returns cached response
+        cache_key = make_cache_key("action_engine", user_context)
+        cached = action_cache.get(cache_key)
+        if cached:
+            logger.info(f"Action Engine CACHE HIT — saved LLM call ({action_cache.stats['hit_rate']} hit rate)")
+            return cached
+
         # Try primary provider
         if self.provider == "bedrock":
             result = await self._call_bedrock(user_context)
             if result:
+                action_cache.set(cache_key, result)
                 return result
             # Bedrock failed — try Groq as backup
             logger.warning("Bedrock failed, falling back to Groq")
             result = await self._call_groq(user_context)
             if result:
+                action_cache.set(cache_key, result)
                 return result
         else:
             # Provider is "groq" — try Groq first, Bedrock backup
             result = await self._call_groq(user_context)
             if result:
+                action_cache.set(cache_key, result)
                 return result
             logger.warning("Groq failed, falling back to Bedrock")
             result = await self._call_bedrock(user_context)
             if result:
+                action_cache.set(cache_key, result)
                 return result
 
         # Both failed

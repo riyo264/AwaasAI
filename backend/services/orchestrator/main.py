@@ -18,17 +18,22 @@ from services.orchestrator.mood_history import (
     store_mood_entry,
     get_mood_history,
 )
+from services.llm_cache import create_cache_table
 
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create mood history table on startup
+    # Create DynamoDB tables on startup
     try:
         create_mood_history_table()
     except Exception as e:
         logger.warning(f"Could not create mood history table: {e}")
+    try:
+        create_cache_table()
+    except Exception as e:
+        logger.warning(f"Could not create LLM cache table: {e}")
     yield
 
 
@@ -64,6 +69,27 @@ class OrchestratorResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"service": "orchestrator", "status": "ok"}
+
+
+@app.get("/cache/stats")
+def cache_stats():
+    """View LLM cache hit/miss statistics — useful for monitoring token savings."""
+    from services.llm_cache import action_cache, mood_cache, narrator_cache
+    return {
+        "action_engine": action_cache.stats,
+        "mood_analysis": mood_cache.stats,
+        "narrator": narrator_cache.stats,
+    }
+
+
+@app.post("/cache/clear")
+def clear_cache():
+    """Clear all LLM caches (force fresh responses)."""
+    from services.llm_cache import action_cache, mood_cache, narrator_cache
+    action_cache.clear()
+    mood_cache.clear()
+    narrator_cache.clear()
+    return {"status": "cleared"}
 
 
 @app.get("/history/{user_id}")

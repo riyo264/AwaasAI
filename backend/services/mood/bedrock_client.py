@@ -4,6 +4,7 @@ Mood Analysis Client — Dual provider:
   Backup:  Groq (LLaMA 3.3 70B)
 
 Audio transcription always uses Groq Whisper (Bedrock doesn't do STT).
+Includes response caching for identical text inputs.
 """
 import json
 import logging
@@ -18,6 +19,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from config import settings
+from services.llm_cache import mood_cache, make_cache_key
 
 logger = logging.getLogger(__name__)
 
@@ -98,22 +100,33 @@ class MoodAnalyzer:
     # ─── Mood Analysis (Bedrock primary, Groq backup) ────────────────────────
 
     async def analyze_text_mood(self, text: str) -> dict:
-        """Analyze mood from text. Tries Bedrock first, then Groq."""
+        """Analyze mood from text. Checks cache first, then tries Bedrock/Groq."""
+        # Check cache — same text returns same mood
+        cache_key = make_cache_key("mood_analysis", text)
+        cached = mood_cache.get(cache_key)
+        if cached:
+            logger.info(f"Mood analysis CACHE HIT — saved LLM call ({mood_cache.stats['hit_rate']} hit rate)")
+            return cached
+
         if self.provider == "bedrock":
             result = await self._analyze_via_bedrock(text)
             if result:
+                mood_cache.set(cache_key, result)
                 return result
             logger.warning("Bedrock mood analysis failed, falling back to Groq")
             result = await self._analyze_via_groq(text)
             if result:
+                mood_cache.set(cache_key, result)
                 return result
         else:
             result = await self._analyze_via_groq(text)
             if result:
+                mood_cache.set(cache_key, result)
                 return result
             logger.warning("Groq mood analysis failed, falling back to Bedrock")
             result = await self._analyze_via_bedrock(text)
             if result:
+                mood_cache.set(cache_key, result)
                 return result
 
         raise Exception("Both Bedrock and Groq mood analysis failed")

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     state_table: str = "SmartHome_HouseholdState"
     patterns_table: str = "SmartHome_Patterns"
     mood_history_table: str = "SmartHome_MoodHistory"
+    llm_cache_table: str = "SmartHome_LLMCache"
 
     # Pattern engine tuning
     analysis_window_days: int = 30
