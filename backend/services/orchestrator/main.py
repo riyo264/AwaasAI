@@ -4,17 +4,35 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import httpx
 
 from config import settings
 from services.orchestrator.action_engine import action_engine
+from services.orchestrator.mood_history import (
+    create_mood_history_table,
+    store_mood_entry,
+    get_mood_history,
+)
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title="MoodSense — Orchestrator Service")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create mood history table on startup
+    try:
+        create_mood_history_table()
+    except Exception as e:
+        logger.warning(f"Could not create mood history table: {e}")
+    yield
+
+
+app = FastAPI(title="MoodSense — Orchestrator Service", lifespan=lifespan)
 
 
 class OrchestratorRequest(BaseModel):
@@ -46,6 +64,17 @@ class OrchestratorResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"service": "orchestrator", "status": "ok"}
+
+
+@app.get("/history/{user_id}")
+def get_history(
+    user_id: str,
+    limit: int = Query(50, ge=1, le=200),
+    since: Optional[str] = Query(None),
+):
+    """Get mood history for a user, most recent first."""
+    entries = get_mood_history(user_id, limit=limit, since=since)
+    return {"user_id": user_id, "count": len(entries), "entries": entries}
 
 
 @app.post("/process", response_model=OrchestratorResponse)
@@ -161,6 +190,34 @@ async def process_interaction(request: OrchestratorRequest):
         behavior_result.get("cognitive_load", "moderate") if behavior_result
         else mood_result.get("cognitive_load", "moderate") if mood_result
         else "moderate"
+    )
+
+    # Store mood change in history
+    trigger = ""
+    source = "unknown"
+    if voice_analyzed and request.speech_text:
+        trigger = f"Speech: '{request.speech_text[:100]}'"
+        source = "voice"
+    elif voice_analyzed:
+        trigger = "Speech: (audio input)"
+        source = "voice"
+    elif behavior_analyzed and behavior_result:
+        patterns = behavior_result.get("patterns_detected", [])
+        trigger = f"Behavior: {', '.join(patterns)}" if patterns else "Behavior: interaction signals"
+        source = "behavior"
+    else:
+        trigger = "System assessment"
+        source = "system"
+
+    store_mood_entry(
+        user_id=request.user_id,
+        mood=final_mood,
+        cognitive_load=final_load,
+        confidence=action_result.get("confidence", mood_confidence),
+        trigger=trigger,
+        source=source,
+        alexa_response=action_result.get("alexa_response", ""),
+        actions=actions,
     )
 
     return OrchestratorResponse(
