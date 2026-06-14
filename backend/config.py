@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     events_table: str = "SmartHome_Events"
     state_table: str = "SmartHome_HouseholdState"
     patterns_table: str = "SmartHome_Patterns"
+    mood_history_table: str = "SmartHome_MoodHistory"
 
     # Pattern engine tuning
     analysis_window_days: int = 30

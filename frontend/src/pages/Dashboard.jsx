@@ -5,6 +5,7 @@ import CognitiveLoadMeter from "../components/CognitiveLoadMeter";
 import EnvironmentPanel from "../components/EnvironmentPanel";
 import VoiceInput from "../components/VoiceInput";
 import BehaviorTracker from "../components/BehaviorTracker";
+import AlexaNotification from "../components/patterns/AlexaNotification";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000/alexa/stream";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [alexaResponse, setAlexaResponse] = useState("");
   const [reasoning, setReasoning] = useState("");
   const [llmPowered, setLlmPowered] = useState(false);
+  const [alexaNotification, setAlexaNotification] = useState(null);
   const wsRef = useRef(null);
   const lastEnvChangeRef = useRef(0); // Cooldown timer for behavior LLM calls
 
@@ -97,6 +99,16 @@ export default function Dashboard() {
         setAlexaResponse(data.alexa_response);
         setReasoning(data.reasoning);
         setLlmPowered(data.llm_powered);
+        // Fire the voice notification
+        if (data.alexa_response) {
+          setAlexaNotification({
+            id: Date.now(),
+            text: data.alexa_response,
+            explanation: data.reasoning || "",
+            llmPowered: data.llm_powered,
+            tone: data.mood === "stressed" || data.mood === "frustrated" || data.mood === "anxious" ? "alert" : "calm",
+          });
+        }
         // DON'T override mood/cognitive_load — the mood service result is canonical
       }
     } catch (err) {
@@ -156,6 +168,16 @@ export default function Dashboard() {
         if (data.alexa_response) setAlexaResponse(data.alexa_response);
         if (data.reasoning) setReasoning(data.reasoning);
         setLlmPowered(data.llm_powered);
+        // Fire the voice notification
+        if (data.alexa_response) {
+          setAlexaNotification({
+            id: Date.now(),
+            text: data.alexa_response,
+            explanation: data.reasoning || "",
+            llmPowered: data.llm_powered,
+            tone: "calm",
+          });
+        }
       }
     } catch (err) {
       console.error("Orchestrator failed:", err);
@@ -264,6 +286,12 @@ export default function Dashboard() {
           Last update: {lastUpdate.toLocaleTimeString()}
         </p>
       )}
+
+      {/* Alexa voice notification popup with TTS */}
+      <AlexaNotification
+        notification={alexaNotification}
+        onClose={() => setAlexaNotification(null)}
+      />
     </div>
   );
 }

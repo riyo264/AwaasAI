@@ -84,6 +84,7 @@ services:
       - BEHAVIOR_SERVICE_URL=http://behavior-service:8002
       - PATTERNS_SERVICE_URL=http://patterns-service:8003
       - DEVICES_SERVICE_URL=http://devices-service:8004
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
     command: uvicorn services.orchestrator.main:app --host 0.0.0.0 --port 8005 --reload
     volumes:
       - ./backend:/app
@@ -92,6 +93,7 @@ services:
       - behavior-service
       - patterns-service
       - devices-service
+      - dynamodb-local
 
   # Frontend Dashboard
   frontend:
