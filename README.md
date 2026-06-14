@@ -50,13 +50,13 @@ It doesn't realize when:
 * 👵 An elderly parent living alone may have missed their medication or needs assistance.
 * 💡 Your son rushed out in the morning and accidentally left the fan running in an empty room all day.
 
-The home is connected, but it isn't aware.
+The home is connected, but it isn't aware of the people it serves. Modern smart homes remain technology-centric instead of **customer-centric**, focusing on devices rather than the needs of the family.
 
 In a country of **joint families**, elderly parents living independently, children coming from school to home alone, working couples, domestic help on schedules, a home that *cannot notice* is a home that *cannot care*.
 
 ### The Solution
 
-**Awaas AI** turns a passive house into an **attentive companion**. It fuses three streams of understanding into one decision-making brain:
+**Awaas AI** turns a passive house into an **attentive companion**. built around a customer-first approach, where every decision starts with understanding the people living in the home. It fuses three streams of understanding into one decision-making brain:
 
 | It understands… | …by | …so it can |
 |---|---|---|
@@ -64,7 +64,7 @@ In a country of **joint families**, elderly parents living independently, childr
 | **How you live** 📊 | learning device routines deterministically over 30 days | notice when something is *off* — left on, missed, or running too long |
 | **Who you love** 🛡️ | layering a vulnerability lens over every anomaly | escalate a small risk into an urgent alert when a vulnerable person is alone |
 
-> **The core philosophy:** the system *discovers what is true* **deterministically** (statistically), and only uses an **LLM to phrase it** in natural, caring language. The AI never decides reality, it only narrates it.
+> **The core philosophy:** the system *discovers what is true* **deterministically** (statistically), and only uses an **LLM to phrase it** in natural, caring language. The AI never decides reality, it only narrates it. This creates a highly customer-centric experience, ensuring that actions are driven by real household context rather than generic AI assumptions.
 
 ---
 
@@ -83,7 +83,7 @@ Detects emotion from **speech** (Whisper → LLM) and **behaviour** (scroll/tap/
 <td width="33%" valign="top">
 
 ### 📊 Pattern Recognition
-Learns daily routines from IoT events using pure **statistics** (time / sequence / duration). Flags **anomalies** with explainable confidence. Uses our innovative pattern-recognition engine which generates patterns from daily events logs and compares these patterns to current state of things in real time. This generates reliable contexts and hence anomalies can be flagged.
+Learns daily routines from IoT events using pure **statistics** (time / sequence / duration). Flags **anomalies** with explainable confidence. Uses our end-to-end pattern-recognition implementaton engine which generates patterns from daily events logs and compares these patterns to current state of things in real time. This generates reliable contexts and hence anomalies can be flagged.
 
 `no ML` · `fully auditable`
 
@@ -102,7 +102,7 @@ A **vulnerability-aware overlay** that re-reads every concern by *who's home*. P
 **Plus:**
 - 🗣️ **Natural Alexa voice** — every alert is spoken in caring, human language (LLM-generated, never templated when online).
 - 🔌 **Dual-provider resilience** — AWS Bedrock primary → Groq fallback → deterministic fallback. *It never fails silently.*
-- 🇮🇳 **Indian-context first** — water motors, gas stoves, pooja routines, joint-family vulnerability, domestic-help schedules.
+- 🇮🇳 **Indian-context first** — a customer-focused design philosophy tailored for Indian households including water motors, gas stoves, pooja routines, joint-family vulnerability, domestic-help schedules.
 
 ---
 
@@ -133,7 +133,7 @@ The wearable fires an `SOS` event. → instant **Emergency** status, score crash
 
 ## ⚙️ How It Works
 
-At the highest level, **everything is one flow**: raw signals come in, deterministic engines decide *what is true*, and an LLM decides *how to say it*.
+At the highest level, **everything is one end-to-end flow**: raw signals come in, deterministic engines decide *what is true*, and an LLM decides *how to say it*. This ensures every recommendation remains transparent, explainable, and aligned with a customer-first smart living experience.
 
 ```mermaid
 flowchart LR
@@ -406,7 +406,7 @@ Starts at **100**, deducts per escalated anomaly → `low −4` · `medium −12
 
 ## 🏛️ Architecture
 
-Awaas AI is a **microservices** platform — 7 independently deployable FastAPI services communicating over HTTP, backed by DynamoDB for persistence and dual LLM providers (Bedrock + Groq) for reasoning. In production it deploys as an EC2 Auto Scaling Group behind an Application Load Balancer with Cognito-based auth and API Gateway rate limiting. Locally, the identical services run inside Docker Compose with a FastAPI gateway replicating ALB path-routing — so the code you develop against is the exact code that ships. Both topologies are shown below.
+Awaas AI is a end-to-end **microservices** platform — 7 independently deployable FastAPI services communicating over HTTP, backed by DynamoDB for persistence and dual LLM providers (Bedrock + Groq) for reasoning. In production it deploys as an EC2 Auto Scaling Group behind an Application Load Balancer with Cognito-based auth and API Gateway rate limiting. Locally, the identical services run inside Docker Compose with a FastAPI gateway replicating ALB path-routing — so the code you develop against is the exact code that ships. Both topologies are shown below.
 
 ### Production architecture (AWS)
 
@@ -543,7 +543,7 @@ flowchart LR
 
 ### Local / codebase architecture
 
-The same services run behind a FastAPI gateway — the model AWS ALB path-routing mirrors in production.
+The same services run behind a FastAPI gateway — the model AWS ALB path-routing mirrors in production, forming a complete end-to-end implementation
 
 ```mermaid
 flowchart TB
