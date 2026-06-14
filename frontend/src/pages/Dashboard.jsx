@@ -23,7 +23,7 @@ export default function Dashboard() {
   const [alexaResponse, setAlexaResponse] = useState("");
   const [reasoning, setReasoning] = useState("");
   const [llmPowered, setLlmPowered] = useState(false);
-  const [alexaNotification, setAlexaNotification] = useState(null);
+  const [alexaNotifications, setAlexaNotifications] = useState([]);
   const wsRef = useRef(null);
   const lastEnvChangeRef = useRef(0); // Cooldown timer for behavior LLM calls
 
@@ -101,13 +101,13 @@ export default function Dashboard() {
         setLlmPowered(data.llm_powered);
         // Fire the voice notification
         if (data.alexa_response) {
-          setAlexaNotification({
+          setAlexaNotifications([{
             id: Date.now(),
             text: data.alexa_response,
             explanation: data.reasoning || "",
             llmPowered: data.llm_powered,
             tone: data.mood === "stressed" || data.mood === "frustrated" || data.mood === "anxious" ? "alert" : "calm",
-          });
+          }]);
         }
         // DON'T override mood/cognitive_load — the mood service result is canonical
       }
@@ -170,13 +170,13 @@ export default function Dashboard() {
         setLlmPowered(data.llm_powered);
         // Fire the voice notification
         if (data.alexa_response) {
-          setAlexaNotification({
+          setAlexaNotifications([{
             id: Date.now(),
             text: data.alexa_response,
             explanation: data.reasoning || "",
             llmPowered: data.llm_powered,
             tone: "calm",
-          });
+          }]);
         }
       }
     } catch (err) {
@@ -289,8 +289,9 @@ export default function Dashboard() {
 
       {/* Alexa voice notification popup with TTS */}
       <AlexaNotification
-        notification={alexaNotification}
-        onClose={() => setAlexaNotification(null)}
+        notifications={alexaNotifications}
+        onDismiss={(id) => setAlexaNotifications((prev) => prev.filter((n) => n.id !== id))}
+        onDismissAll={() => setAlexaNotifications([])}
       />
     </div>
   );
