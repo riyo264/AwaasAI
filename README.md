@@ -4,7 +4,7 @@
 
 ### A context-aware smart-home brain that understands how you **feel**, learns how you **live**, and protects who you **love**.
 
-*Built for the Indian household — connected to Amazon Alexa, powered by deterministic intelligence and LLM reasoning.*
+*Built for the Indian household — connected to Amazon Alexa, powered by AWS Bedrock, Amazon DynamoDB, and ambient intelligence.*
 
 <br/>
 
@@ -56,7 +56,7 @@ In a country of **joint families**, elderly parents living independently, childr
 
 ### The Solution
 
-**Awaas AI** turns a passive house into an **attentive companion**. built around a customer-first approach, where every decision starts with understanding the people living in the home. It fuses three streams of understanding into one decision-making brain:
+**Awaas AI** turns a passive house into an **attentive companion** — an Alexa-native ambient intelligence experience built on the **customer obsession** principle, where every decision starts with understanding the people living in the home. It fuses three streams of understanding into one decision-making brain:
 
 | It understands… | …by | …so it can |
 |---|---|---|
@@ -64,7 +64,7 @@ In a country of **joint families**, elderly parents living independently, childr
 | **How you live** 📊 | learning device routines deterministically over 30 days | notice when something is *off* — left on, missed, or running too long |
 | **Who you love** 🛡️ | layering a vulnerability lens over every anomaly | escalate a small risk into an urgent alert when a vulnerable person is alone |
 
-> **The core philosophy:** the system *discovers what is true* **deterministically** (statistically), and only uses an **LLM to phrase it** in natural, caring language. The AI never decides reality, it only narrates it. This creates a highly customer-centric experience, ensuring that actions are driven by real household context rather than generic AI assumptions.
+> **The core philosophy:** the system *discovers what is true* **deterministically** (statistically), and only uses an **LLM to phrase it** in natural, caring language through the **Alexa voice interface**. The AI never decides reality, it only narrates it — ensuring **trustworthiness** and **responsible AI** at every layer. This creates a highly customer-centric experience, ensuring that actions are driven by real household context rather than generic AI assumptions.
 
 ---
 
@@ -100,9 +100,10 @@ A **vulnerability-aware overlay** that re-reads every concern by *who's home*. P
 </table>
 
 **Plus:**
-- 🗣️ **Natural Alexa voice** — every alert is spoken in caring, human language (LLM-generated, never templated when online).
-- 🔌 **Dual-provider resilience** — AWS Bedrock primary → Groq fallback → deterministic fallback. *It never fails silently.*
-- 🇮🇳 **Indian-context first** — a customer-focused design philosophy tailored for Indian households including water motors, gas stoves, pooja routines, joint-family vulnerability, domestic-help schedules.
+- 🗣️ **Natural Alexa voice** — every alert is spoken in caring, human language (LLM-generated, never templated when online). Designed for **voice-first interaction** aligned with the Alexa Smart Home skill model.
+- 🔌 **Dual-provider resilience** — AWS Bedrock primary → Groq fallback → deterministic fallback. *It never fails silently.* Built with **operational excellence** and **high availability** principles.
+- 🇮🇳 **Indian-context first** — a customer-focused design philosophy tailored for Indian households including water motors, gas stoves, pooja routines, joint-family vulnerability, domestic-help schedules. Serving **Bharat's next billion users**.
+- 🔒 **Privacy by design** — all inferencing happens within the customer's AWS account via Bedrock. No raw audio or personal data leaves to third parties. Aligned with **AWS Shared Responsibility** and **data sovereignty** principles.
 
 ---
 
@@ -406,7 +407,7 @@ Starts at **100**, deducts per escalated anomaly → `low −4` · `medium −12
 
 ## 🏛️ Architecture
 
-Awaas AI is a end-to-end **microservices** platform — 7 independently deployable FastAPI services communicating over HTTP, backed by DynamoDB for persistence and dual LLM providers (Bedrock + Groq) for reasoning. In production it deploys as an EC2 Auto Scaling Group behind an Application Load Balancer with Cognito-based auth and API Gateway rate limiting. Locally, the identical services run inside Docker Compose with a FastAPI gateway replicating ALB path-routing — so the code you develop against is the exact code that ships. Both topologies are shown below.
+Awaas AI is an end-to-end **microservices** platform — 7 independently deployable FastAPI services communicating over HTTP, backed by **Amazon DynamoDB** for serverless persistence and dual LLM providers (**AWS Bedrock** + Groq) for generative AI reasoning. In production it deploys as an **EC2 Auto Scaling Group** behind an **Application Load Balancer** with **Amazon Cognito**-based auth and **Amazon API Gateway** rate limiting — following the **AWS Well-Architected Framework** for reliability, security, and cost efficiency. Locally, the identical services run inside Docker Compose with a FastAPI gateway replicating ALB path-routing — so the code you develop against is the exact code that ships. Both topologies are shown below.
 
 ### Production architecture (AWS)
 
@@ -525,10 +526,10 @@ flowchart LR
 
 | Service | Role |
 |---------|------|
-| 📊 **Amazon CloudWatch** | metrics, logs & alarms across all instances |
-| 🔑 **AWS Secrets Manager** | API keys (Groq), DB creds, Bedrock access |
-| 📣 **Amazon SNS / SES** | emergency alert delivery (SMS / email / push) |
-| 🪣 **Amazon S3** | shared logs & archived voice files |
+| 📊 **Amazon CloudWatch** | metrics, logs & alarms across all instances — **observability** |
+| 🔑 **AWS Secrets Manager** | API keys (Groq), DB creds, Bedrock access — **least privilege** |
+| 📣 **Amazon SNS / SES** | emergency alert delivery (SMS / email / push) — **event-driven** |
+| 🪣 **Amazon S3** | shared logs & archived voice files — **durable storage** |
 
 | AWS layer | Service | Maps to (local) |
 |-----------|---------|-----------------|
@@ -596,7 +597,7 @@ flowchart TB
 | 🛡️ **Safety** | 8006 | Vulnerability-aware twin of the pattern engine |
 | 🗄️ **DynamoDB** | 8100 | Events · State · Patterns · MoodHistory · Profiles |
 
-> **Design principles:** graceful degradation (every LLM call has a deterministic fallback) · explainability (confidence + reasoning everywhere) · *no ML in detection* · *LLM only for language*.
+> **Design principles:** graceful degradation (every LLM call has a deterministic fallback) · explainability (confidence + reasoning everywhere) · *no ML in detection* · *LLM only for language* · **Well-Architected Framework** alignment (operational excellence, security, reliability, performance efficiency, cost optimization).
 
 ### Repository layout
 
@@ -634,8 +635,8 @@ Team-NoWins/
 |-------|-----------|
 | **Frontend** | React 19 · Vite 8 · React Router · TailwindCSS 4 · lucide-react |
 | **Backend** | Python 3.11+ · FastAPI · Uvicorn · Pydantic v2 |
-| **Database** | Amazon DynamoDB (DynamoDB Local / `moto` for dev) |
-| **LLM — primary** | AWS Bedrock — Nvidia Nemotron Super 3 120B |
+| **Database** | Amazon DynamoDB (DynamoDB Local / `moto` for dev) — serverless, pay-per-request |
+| **LLM — primary** | AWS Bedrock — Nvidia Nemotron Super 3 120B (fully managed, no infrastructure) |
 | **LLM — fallback** | Groq — LLaMA 3.3 70B Versatile |
 | **Speech-to-Text** | Groq Whisper Large V3 Turbo |
 | **Infra** | Docker Compose (9 containers) · `httpx` inter-service calls |
@@ -745,6 +746,6 @@ cd backend && pytest patterns/ safety/   # uses in-memory moto DynamoDB, no AWS 
 
 <br/>
 
-*Built with ❤️ for HackOn 2026 · Team NoWins*
+*Built with ❤️ for HackOn 2026 · Team NoWins · Powered by AWS*
 
 </div>
