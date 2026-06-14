@@ -1,4 +1,4 @@
-# HomeLens — AI-Powered Smart Home Mood & Safety Platform
+# Awaas AI — AI-Powered Smart Home Mood & Safety Platform
 
 An intelligent system that understands how you feel and keeps your home safe. HomeLens detects mood and cognitive load through speech, behavioral patterns, and device usage history — then automatically adjusts your environment and monitors vulnerable family members.
 
