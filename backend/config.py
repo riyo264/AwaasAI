@@ -43,9 +43,24 @@ class Settings(BaseSettings):
     devices_service_url: str = "http://localhost:8004"
     orchestrator_service_url: str = "http://localhost:8005"
 
+    # Cognito Auth (local dev validation)
+    cognito_user_pool_id: str = ""
+    cognito_app_client_id: str = ""
+    cognito_region: str = "us-east-1"
+    auth_enabled: bool = True
+    jwks_cache_ttl_seconds: int = 3600
+
     # App
     app_name: str = "MoodSense AI"
     debug: bool = True
+
+    @property
+    def cognito_issuer(self) -> str:
+        return f"https://cognito-idp.{self.cognito_region}.amazonaws.com/{self.cognito_user_pool_id}"
+
+    @property
+    def jwks_url(self) -> str:
+        return f"{self.cognito_issuer}/.well-known/jwks.json"
 
     class Config:
         env_file = ".env"

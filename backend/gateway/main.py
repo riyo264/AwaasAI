@@ -10,6 +10,10 @@ import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from config import settings
+from gateway.jwks_cache import JWKSCache
+from gateway.auth_middleware import JWTAuthMiddleware
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,6 +22,28 @@ app = FastAPI(
     description="Routes requests to microservices. Simulates ALB path-based routing.",
     version="1.0.0",
 )
+
+# Auth middleware is added FIRST so it runs BEFORE the proxy handler.
+# CORS middleware is added AFTER (Starlette processes middleware in reverse order),
+# meaning CORS runs first → auth runs second → route handler runs last.
+# This ensures CORS preflight OPTIONS requests are handled without requiring auth.
+if settings.cognito_user_pool_id:
+    jwks_cache = JWKSCache(
+        jwks_url=settings.jwks_url,
+        cache_ttl_seconds=settings.jwks_cache_ttl_seconds,
+    )
+    app.add_middleware(
+        JWTAuthMiddleware,
+        auth_enabled=settings.auth_enabled,
+        cognito_issuer=settings.cognito_issuer,
+        cognito_app_client_id=settings.cognito_app_client_id,
+        jwks_cache=jwks_cache,
+    )
+else:
+    logger.warning(
+        "COGNITO_USER_POOL_ID not set — JWT auth middleware disabled. "
+        "All requests will pass through without authentication."
+    )
 
 app.add_middleware(
     CORSMiddleware,
