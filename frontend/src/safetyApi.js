@@ -43,6 +43,27 @@ export const safetyApi = {
       { method: "POST" },
     ),
 
+  // The live "dollhouse" evaluation: send the exact current board (which
+  // devices are ON, who is placed in the home + how vulnerable, the demo clock,
+  // and any momentary signals) and get back a fully vulnerability-aware
+  // ContextObject. Nothing is persisted — every call is ephemeral, so the demo
+  // data is never mutated no matter how much the user pokes at the home.
+  //
+  // body = {
+  //   current_time?: "HH:MM",
+  //   active_devices: string[],
+  //   device_on_since?: { [deviceId]: ISOString },
+  //   people_home?: { [personId]: boolean },
+  //   profiles?: PersonProfile[],          // the placed cast
+  //   signals?: EvaluateSignal[],          // SOS / health / last-seen pings
+  //   ignore_stored_events?: boolean,      // clean "quiet house" inactivity
+  // }
+  evaluate: (householdId, body) =>
+    request(`/context/${householdId}/evaluate`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   scenarios: () => request("/admin/scenarios"),
 
   // Narrate each detected concern as its own spoken Alexa line (most-severe

@@ -6,12 +6,14 @@ Bedrock for reasoning — that step is intentionally NOT implemented here.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
 from safety.models.context import ContextObject
+from safety.models.events import DeviceAction, DeviceType, Event
+from safety.models.safety import PersonProfile
 from safety.logic import context_service, narrator
 
 router = APIRouter(prefix="/context", tags=["context"])
@@ -44,6 +46,26 @@ class NarrationListResponse(BaseModel):
 
 
 
+class EvaluateSignal(BaseModel):
+    """A synthetic momentary signal injected into the what-if evaluation.
+
+    Powers the live dashboard's panic buttons and "quiet house" demo: an SOS
+    press, a wearable health ALERT, or a "last seen" activity ping. It is turned
+    into an ephemeral recent event (timestamped ``minutes_ago`` before the demo
+    clock) so the event-reading detectors fire — without persisting anything.
+    """
+
+    device_id: str = Field(..., examples=["grandpa_wearable"])
+    device_type: DeviceType = DeviceType.OTHER
+    room: str = "home"
+    action: DeviceAction
+    triggered_by: str = "system"
+    minutes_ago: float = Field(
+        0.0, ge=0.0, description="How long before the demo clock this signal fired."
+    )
+    metadata: dict | None = None
+
+
 class EvaluateStateRequest(BaseModel):
     """A user-supplied what-if snapshot to compare against learned patterns."""
 
@@ -66,6 +88,27 @@ class EvaluateStateRequest(BaseModel):
         description=(
             "Optional map of device_id -> ISO time it turned on. Enables "
             "duration-based anomalies; omit for a pure ON/OFF check."
+        ),
+    )
+    profiles: list[PersonProfile] | None = Field(
+        None,
+        description=(
+            "Ephemeral cast: who is home right now and how vulnerable. When set, "
+            "the vulnerability lens is driven entirely by this list instead of "
+            "the persisted profile table — nothing is written to the database, so "
+            "the UI can add/remove people live and watch concerns re-escalate."
+        ),
+    )
+    signals: list[EvaluateSignal] = Field(
+        default_factory=list,
+        description="Synthetic momentary signals (SOS / health ALERT / last-seen ping).",
+    )
+    ignore_stored_events: bool = Field(
+        False,
+        description=(
+            "Drop the stored event tail and judge only against `signals`. Used "
+            "for a clean inactivity demo where seeded events would count as "
+            "signs of life."
         ),
     )
 
@@ -114,12 +157,34 @@ def evaluate_context(
     The supplied state is evaluated in-memory only — nothing is persisted, so
     the demo data is never mutated.
     """
+    now = _resolve_now(body.current_time)
+    eff_now = now or datetime.now(timezone.utc)
+
+    # Turn synthetic signals into ephemeral recent events, timestamped relative
+    # to the demo clock. These never touch the events table.
+    extra_recent = [
+        Event(
+            household_id=household_id,
+            device_id=s.device_id,
+            device_type=s.device_type,
+            room=s.room,
+            action=s.action,
+            triggered_by=s.triggered_by,
+            timestamp=eff_now - timedelta(minutes=s.minutes_ago),
+            metadata=s.metadata,
+        )
+        for s in body.signals
+    ]
+
     return context_service.evaluate_context(
         household_id,
         active_devices=body.active_devices,
         people_home=body.people_home,
         device_on_since=body.device_on_since,
-        now=_resolve_now(body.current_time),
+        now=now,
+        profiles=body.profiles,
+        extra_recent=extra_recent,
+        ignore_stored_events=body.ignore_stored_events,
     )
 
 
