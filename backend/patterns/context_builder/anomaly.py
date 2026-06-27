@@ -186,7 +186,17 @@ def detect_device_left_on(
             # avoids the cross-midnight wrap that used to (wrongly) flag a device
             # in the small hours and leave a dead zone right after the OFF time.
             now_min = _now_minutes(now)
-            if now_min <= off_min + window:
+            # Circular comparison so late-night OFF times work correctly.
+            # off_min + window can exceed 1440 (e.g. 23:30 OFF + 30 min window
+            # = 1440 = midnight), making "now_min <= 1440" always True after
+            # midnight and silently preventing any late-night device from ever
+            # being flagged.  Instead we compute how many minutes forward on the
+            # 24-hour clock now_min sits relative to the window-end.  If that
+            # forward distance is larger than 12 h we haven't reached the window
+            # yet; if it's small we genuinely are past it.
+            window_end_mod = (off_min + window) % 1440
+            fwd = (now_min - window_end_mod) % 1440
+            if fwd > 720:  # clock hasn't reached the off-window yet
                 continue
 
         anomalies.append(
@@ -405,11 +415,18 @@ def detect_missed_routine(
         expected = _hhmm_to_minutes(p.usual_time)
         window_passed = expected + p.window_minutes + s.departure_grace_minutes
         # Only within a transient horizon after the window passes.
-        if not (
-            window_passed
-            <= now_min
-            <= window_passed + s.missed_routine_horizon_minutes
-        ):
+        # The raw sum window_passed can exceed 1440 for late-evening routines
+        # (e.g. expected=23:00 + window=30 + grace=60 → 1470).  A plain
+        # "window_passed <= now_min <= window_passed + horizon" comparison then
+        # requires now_min > 1440, which is impossible, so every routine after
+        # ~21:30 is silently never reported as missed.
+        # Fix: wrap window_passed to its minute-of-day equivalent, then measure
+        # the forward arc from that point to now_min on the circular clock.  A
+        # forward arc within the horizon means "inside the detection window";
+        # larger means either "not reached yet" or "window has long passed".
+        window_passed_mod = window_passed % 1440
+        forward_dist = (now_min - window_passed_mod) % 1440
+        if not (forward_dist <= s.missed_routine_horizon_minutes):
             continue
         # The routine did happen → not missed.
         if p.device in active or (p.device, p.action) in todays:
@@ -479,7 +496,12 @@ def detect_unexpected_activity(
             continue
         pattern_id, usual_min, window, usual_str = expected[key]
         ev_min = ets.hour * 60 + ets.minute
-        if abs(ev_min - usual_min) <= window + tolerance:
+        # Circular distance so midnight-crossing schedules work correctly.
+        # A maid who usually arrives at 23:50 arriving at 00:05 is only
+        # 15 minutes off-schedule; the linear |ev_min - usual_min| = 1425
+        # would wrongly fire a security alert.
+        circ_dist = min(abs(ev_min - usual_min), 1440 - abs(ev_min - usual_min))
+        if circ_dist <= window + tolerance:
             continue  # within the normal window → fine
 
         flagged.add(key)
