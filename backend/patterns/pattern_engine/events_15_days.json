@@ -1,0 +1,2812 @@
+[
+  {
+    "event_id": "E0001",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T06:00:00"
+  },
+  {
+    "event_id": "E0002",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T08:05:00"
+  },
+  {
+    "event_id": "E0003",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T08:07:00"
+  },
+  {
+    "event_id": "E0004",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T08:09:00"
+  },
+  {
+    "event_id": "E0005",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T08:11:00"
+  },
+  {
+    "event_id": "E0006",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T09:00:00"
+  },
+  {
+    "event_id": "E0007",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T09:15:00"
+  },
+  {
+    "event_id": "E0008",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-01T13:17:00"
+  },
+  {
+    "event_id": "E0009",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-01T13:29:00"
+  },
+  {
+    "event_id": "E0010",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T18:28:00"
+  },
+  {
+    "event_id": "E0011",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-01T18:29:00"
+  },
+  {
+    "event_id": "E0012",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T18:31:00"
+  },
+  {
+    "event_id": "E0013",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T18:33:00"
+  },
+  {
+    "event_id": "E0014",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-01T18:45:00"
+  },
+  {
+    "event_id": "E0015",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-01T20:04:00"
+  },
+  {
+    "event_id": "E0016",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-01T22:31:00"
+  },
+  {
+    "event_id": "E0017",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T22:33:00"
+  },
+  {
+    "event_id": "E0018",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T22:35:00"
+  },
+  {
+    "event_id": "E0019",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-01T22:36:00"
+  },
+  {
+    "event_id": "E0020",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T06:00:00"
+  },
+  {
+    "event_id": "E0021",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T08:05:00"
+  },
+  {
+    "event_id": "E0022",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T08:07:00"
+  },
+  {
+    "event_id": "E0023",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T08:09:00"
+  },
+  {
+    "event_id": "E0024",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T08:11:00"
+  },
+  {
+    "event_id": "E0025",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T09:02:00"
+  },
+  {
+    "event_id": "E0026",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T09:17:00"
+  },
+  {
+    "event_id": "E0027",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T18:27:00"
+  },
+  {
+    "event_id": "E0028",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-02T18:28:00"
+  },
+  {
+    "event_id": "E0029",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T18:30:00"
+  },
+  {
+    "event_id": "E0030",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T18:32:00"
+  },
+  {
+    "event_id": "E0031",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-02T18:45:00"
+  },
+  {
+    "event_id": "E0032",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-02T20:18:00"
+  },
+  {
+    "event_id": "E0033",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-02T22:36:00"
+  },
+  {
+    "event_id": "E0034",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T22:38:00"
+  },
+  {
+    "event_id": "E0035",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T22:40:00"
+  },
+  {
+    "event_id": "E0036",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-02T22:41:00"
+  },
+  {
+    "event_id": "E0037",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T06:00:00"
+  },
+  {
+    "event_id": "E0038",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T08:00:00"
+  },
+  {
+    "event_id": "E0039",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T08:02:00"
+  },
+  {
+    "event_id": "E0040",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T08:04:00"
+  },
+  {
+    "event_id": "E0041",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T08:06:00"
+  },
+  {
+    "event_id": "E0042",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T09:00:00"
+  },
+  {
+    "event_id": "E0043",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T09:15:00"
+  },
+  {
+    "event_id": "E0044",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-03T13:14:00"
+  },
+  {
+    "event_id": "E0045",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-03T13:19:00"
+  },
+  {
+    "event_id": "E0046",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T18:31:00"
+  },
+  {
+    "event_id": "E0047",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-03T18:32:00"
+  },
+  {
+    "event_id": "E0048",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T18:34:00"
+  },
+  {
+    "event_id": "E0049",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T18:36:00"
+  },
+  {
+    "event_id": "E0050",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-03T18:45:00"
+  },
+  {
+    "event_id": "E0051",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-03T20:06:00"
+  },
+  {
+    "event_id": "E0052",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-03T22:40:00"
+  },
+  {
+    "event_id": "E0053",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T22:42:00"
+  },
+  {
+    "event_id": "E0054",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T22:44:00"
+  },
+  {
+    "event_id": "E0055",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-03T22:45:00"
+  },
+  {
+    "event_id": "E0056",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T06:00:00"
+  },
+  {
+    "event_id": "E0057",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T08:05:00"
+  },
+  {
+    "event_id": "E0058",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T08:07:00"
+  },
+  {
+    "event_id": "E0059",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T08:09:00"
+  },
+  {
+    "event_id": "E0060",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T08:11:00"
+  },
+  {
+    "event_id": "E0061",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T09:02:00"
+  },
+  {
+    "event_id": "E0062",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T09:17:00"
+  },
+  {
+    "event_id": "E0063",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-04T13:28:00"
+  },
+  {
+    "event_id": "E0064",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-04T13:41:00"
+  },
+  {
+    "event_id": "E0065",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T18:33:00"
+  },
+  {
+    "event_id": "E0066",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-04T18:34:00"
+  },
+  {
+    "event_id": "E0067",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T18:36:00"
+  },
+  {
+    "event_id": "E0068",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T18:38:00"
+  },
+  {
+    "event_id": "E0069",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-04T18:45:00"
+  },
+  {
+    "event_id": "E0070",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-04T20:00:00"
+  },
+  {
+    "event_id": "E0071",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-04T22:32:00"
+  },
+  {
+    "event_id": "E0072",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T22:34:00"
+  },
+  {
+    "event_id": "E0073",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T22:36:00"
+  },
+  {
+    "event_id": "E0074",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-04T22:37:00"
+  },
+  {
+    "event_id": "E0075",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T06:00:00"
+  },
+  {
+    "event_id": "E0076",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T08:05:00"
+  },
+  {
+    "event_id": "E0077",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T08:07:00"
+  },
+  {
+    "event_id": "E0078",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T08:09:00"
+  },
+  {
+    "event_id": "E0079",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T08:11:00"
+  },
+  {
+    "event_id": "E0080",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T09:01:00"
+  },
+  {
+    "event_id": "E0081",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T09:16:00"
+  },
+  {
+    "event_id": "E0082",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-05T13:09:00"
+  },
+  {
+    "event_id": "E0083",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-05T13:20:00"
+  },
+  {
+    "event_id": "E0084",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T18:33:00"
+  },
+  {
+    "event_id": "E0085",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-05T18:34:00"
+  },
+  {
+    "event_id": "E0086",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T18:36:00"
+  },
+  {
+    "event_id": "E0087",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T18:38:00"
+  },
+  {
+    "event_id": "E0088",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-05T18:45:00"
+  },
+  {
+    "event_id": "E0089",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-05T20:10:00"
+  },
+  {
+    "event_id": "E0090",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-05T22:31:00"
+  },
+  {
+    "event_id": "E0091",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T22:33:00"
+  },
+  {
+    "event_id": "E0092",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T22:35:00"
+  },
+  {
+    "event_id": "E0093",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-05T22:36:00"
+  },
+  {
+    "event_id": "E0094",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T06:00:00"
+  },
+  {
+    "event_id": "E0099",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T09:01:00"
+  },
+  {
+    "event_id": "E0100",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T09:16:00"
+  },
+  {
+    "event_id": "E0095",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T10:00:00"
+  },
+  {
+    "event_id": "E0096",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T10:02:00"
+  },
+  {
+    "event_id": "E0097",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T10:04:00"
+  },
+  {
+    "event_id": "E0098",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T10:06:00"
+  },
+  {
+    "event_id": "E0101",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-06T13:22:00"
+  },
+  {
+    "event_id": "E0102",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-06T13:35:00"
+  },
+  {
+    "event_id": "E0107",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T18:45:00"
+  },
+  {
+    "event_id": "E0103",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-06T19:01:00"
+  },
+  {
+    "event_id": "E0104",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-06T19:02:00"
+  },
+  {
+    "event_id": "E0105",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T19:04:00"
+  },
+  {
+    "event_id": "E0106",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T19:06:00"
+  },
+  {
+    "event_id": "E0108",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-06T20:14:00"
+  },
+  {
+    "event_id": "E0109",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-06T22:38:00"
+  },
+  {
+    "event_id": "E0110",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T22:40:00"
+  },
+  {
+    "event_id": "E0111",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T22:42:00"
+  },
+  {
+    "event_id": "E0112",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-06T22:43:00"
+  },
+  {
+    "event_id": "E0113",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T06:00:00"
+  },
+  {
+    "event_id": "E0118",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T09:01:00"
+  },
+  {
+    "event_id": "E0119",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T09:16:00"
+  },
+  {
+    "event_id": "E0114",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T10:00:00"
+  },
+  {
+    "event_id": "E0115",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T10:02:00"
+  },
+  {
+    "event_id": "E0116",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T10:04:00"
+  },
+  {
+    "event_id": "E0117",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T10:06:00"
+  },
+  {
+    "event_id": "E0120",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-07T13:18:00"
+  },
+  {
+    "event_id": "E0121",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-07T13:34:00"
+  },
+  {
+    "event_id": "E0126",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T18:45:00"
+  },
+  {
+    "event_id": "E0122",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-07T19:18:00"
+  },
+  {
+    "event_id": "E0123",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-07T19:19:00"
+  },
+  {
+    "event_id": "E0124",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T19:21:00"
+  },
+  {
+    "event_id": "E0125",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T19:23:00"
+  },
+  {
+    "event_id": "E0127",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-07T20:06:00"
+  },
+  {
+    "event_id": "E0128",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-07T22:31:00"
+  },
+  {
+    "event_id": "E0129",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T22:33:00"
+  },
+  {
+    "event_id": "E0130",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T22:35:00"
+  },
+  {
+    "event_id": "E0131",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-07T22:36:00"
+  },
+  {
+    "event_id": "E0132",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T06:00:00"
+  },
+  {
+    "event_id": "E0133",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T08:00:00"
+  },
+  {
+    "event_id": "E0134",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T08:02:00"
+  },
+  {
+    "event_id": "E0135",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T08:04:00"
+  },
+  {
+    "event_id": "E0136",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T08:06:00"
+  },
+  {
+    "event_id": "E0137",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T09:02:00"
+  },
+  {
+    "event_id": "E0138",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T09:17:00"
+  },
+  {
+    "event_id": "E0139",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-08T13:18:00"
+  },
+  {
+    "event_id": "E0140",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-08T13:25:00"
+  },
+  {
+    "event_id": "E0141",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T18:33:00"
+  },
+  {
+    "event_id": "E0142",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-08T18:34:00"
+  },
+  {
+    "event_id": "E0143",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T18:36:00"
+  },
+  {
+    "event_id": "E0144",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T18:38:00"
+  },
+  {
+    "event_id": "E0145",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-08T18:45:00"
+  },
+  {
+    "event_id": "E0146",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-08T20:07:00"
+  },
+  {
+    "event_id": "E0147",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-08T22:31:00"
+  },
+  {
+    "event_id": "E0148",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T22:33:00"
+  },
+  {
+    "event_id": "E0149",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T22:35:00"
+  },
+  {
+    "event_id": "E0150",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-08T22:36:00"
+  },
+  {
+    "event_id": "E0151",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T06:00:00"
+  },
+  {
+    "event_id": "E0152",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T08:03:00"
+  },
+  {
+    "event_id": "E0153",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T08:05:00"
+  },
+  {
+    "event_id": "E0154",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T08:07:00"
+  },
+  {
+    "event_id": "E0155",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T08:09:00"
+  },
+  {
+    "event_id": "E0156",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T09:01:00"
+  },
+  {
+    "event_id": "E0157",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T09:16:00"
+  },
+  {
+    "event_id": "E0158",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-09T13:23:00"
+  },
+  {
+    "event_id": "E0159",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-09T13:33:00"
+  },
+  {
+    "event_id": "E0160",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T18:29:00"
+  },
+  {
+    "event_id": "E0161",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-09T18:30:00"
+  },
+  {
+    "event_id": "E0162",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T18:32:00"
+  },
+  {
+    "event_id": "E0163",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T18:34:00"
+  },
+  {
+    "event_id": "E0164",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-09T18:45:00"
+  },
+  {
+    "event_id": "E0165",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-09T20:11:00"
+  },
+  {
+    "event_id": "E0166",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-09T22:33:00"
+  },
+  {
+    "event_id": "E0167",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T22:35:00"
+  },
+  {
+    "event_id": "E0168",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T22:37:00"
+  },
+  {
+    "event_id": "E0169",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-09T22:38:00"
+  },
+  {
+    "event_id": "E0170",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T06:00:00"
+  },
+  {
+    "event_id": "E0171",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T08:05:00"
+  },
+  {
+    "event_id": "E0172",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T08:07:00"
+  },
+  {
+    "event_id": "E0173",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T08:09:00"
+  },
+  {
+    "event_id": "E0174",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T08:11:00"
+  },
+  {
+    "event_id": "E0175",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T09:01:00"
+  },
+  {
+    "event_id": "E0176",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T09:16:00"
+  },
+  {
+    "event_id": "E0177",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T18:32:00"
+  },
+  {
+    "event_id": "E0178",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-10T18:33:00"
+  },
+  {
+    "event_id": "E0179",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T18:35:00"
+  },
+  {
+    "event_id": "E0180",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T18:37:00"
+  },
+  {
+    "event_id": "E0181",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-10T18:45:00"
+  },
+  {
+    "event_id": "E0182",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-10T20:20:00"
+  },
+  {
+    "event_id": "E0183",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-10T22:31:00"
+  },
+  {
+    "event_id": "E0184",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T22:33:00"
+  },
+  {
+    "event_id": "E0185",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T22:35:00"
+  },
+  {
+    "event_id": "E0186",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-10T22:36:00"
+  },
+  {
+    "event_id": "E0187",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T06:00:00"
+  },
+  {
+    "event_id": "E0188",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T08:04:00"
+  },
+  {
+    "event_id": "E0189",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T08:06:00"
+  },
+  {
+    "event_id": "E0190",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T08:08:00"
+  },
+  {
+    "event_id": "E0191",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T08:10:00"
+  },
+  {
+    "event_id": "E0192",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T09:02:00"
+  },
+  {
+    "event_id": "E0193",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T09:17:00"
+  },
+  {
+    "event_id": "E0194",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-11T13:15:00"
+  },
+  {
+    "event_id": "E0195",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-11T13:25:00"
+  },
+  {
+    "event_id": "E0196",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T18:30:00"
+  },
+  {
+    "event_id": "E0197",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-11T18:31:00"
+  },
+  {
+    "event_id": "E0198",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T18:33:00"
+  },
+  {
+    "event_id": "E0199",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T18:35:00"
+  },
+  {
+    "event_id": "E0200",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-11T18:45:00"
+  },
+  {
+    "event_id": "E0201",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-11T20:12:00"
+  },
+  {
+    "event_id": "E0202",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-11T22:34:00"
+  },
+  {
+    "event_id": "E0203",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T22:36:00"
+  },
+  {
+    "event_id": "E0204",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T22:38:00"
+  },
+  {
+    "event_id": "E0205",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-11T22:39:00"
+  },
+  {
+    "event_id": "E0206",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T06:00:00"
+  },
+  {
+    "event_id": "E0207",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T08:05:00"
+  },
+  {
+    "event_id": "E0208",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T08:07:00"
+  },
+  {
+    "event_id": "E0209",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T08:09:00"
+  },
+  {
+    "event_id": "E0210",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T08:11:00"
+  },
+  {
+    "event_id": "E0211",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T09:02:00"
+  },
+  {
+    "event_id": "E0212",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T09:17:00"
+  },
+  {
+    "event_id": "E0213",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-12T13:20:00"
+  },
+  {
+    "event_id": "E0214",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-12T13:26:00"
+  },
+  {
+    "event_id": "E0215",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T18:28:00"
+  },
+  {
+    "event_id": "E0216",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-12T18:29:00"
+  },
+  {
+    "event_id": "E0217",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T18:31:00"
+  },
+  {
+    "event_id": "E0218",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T18:33:00"
+  },
+  {
+    "event_id": "E0219",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-12T18:45:00"
+  },
+  {
+    "event_id": "E0220",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-12T20:01:00"
+  },
+  {
+    "event_id": "E0221",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-12T22:35:00"
+  },
+  {
+    "event_id": "E0222",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T22:37:00"
+  },
+  {
+    "event_id": "E0223",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T22:39:00"
+  },
+  {
+    "event_id": "E0224",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-12T22:40:00"
+  },
+  {
+    "event_id": "E0225",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T06:00:00"
+  },
+  {
+    "event_id": "E0230",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T09:01:00"
+  },
+  {
+    "event_id": "E0231",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T09:16:00"
+  },
+  {
+    "event_id": "E0226",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T10:03:00"
+  },
+  {
+    "event_id": "E0227",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T10:05:00"
+  },
+  {
+    "event_id": "E0228",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T10:07:00"
+  },
+  {
+    "event_id": "E0229",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T10:09:00"
+  },
+  {
+    "event_id": "E0232",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-13T13:36:00"
+  },
+  {
+    "event_id": "E0233",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-13T13:51:00"
+  },
+  {
+    "event_id": "E0238",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T18:45:00"
+  },
+  {
+    "event_id": "E0234",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-13T19:06:00"
+  },
+  {
+    "event_id": "E0235",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-13T19:07:00"
+  },
+  {
+    "event_id": "E0236",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T19:09:00"
+  },
+  {
+    "event_id": "E0237",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T19:11:00"
+  },
+  {
+    "event_id": "E0239",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-13T20:20:00"
+  },
+  {
+    "event_id": "E0240",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-13T22:37:00"
+  },
+  {
+    "event_id": "E0241",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T22:39:00"
+  },
+  {
+    "event_id": "E0242",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T22:41:00"
+  },
+  {
+    "event_id": "E0243",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-13T22:42:00"
+  },
+  {
+    "event_id": "E0244",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T06:00:00"
+  },
+  {
+    "event_id": "E0249",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T09:02:00"
+  },
+  {
+    "event_id": "E0250",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T09:17:00"
+  },
+  {
+    "event_id": "E0245",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T10:03:00"
+  },
+  {
+    "event_id": "E0246",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T10:05:00"
+  },
+  {
+    "event_id": "E0247",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T10:07:00"
+  },
+  {
+    "event_id": "E0248",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T10:09:00"
+  },
+  {
+    "event_id": "E0251",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-14T13:16:00"
+  },
+  {
+    "event_id": "E0252",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-14T13:25:00"
+  },
+  {
+    "event_id": "E0257",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T18:45:00"
+  },
+  {
+    "event_id": "E0253",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-14T19:07:00"
+  },
+  {
+    "event_id": "E0254",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-14T19:08:00"
+  },
+  {
+    "event_id": "E0255",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T19:10:00"
+  },
+  {
+    "event_id": "E0256",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T19:12:00"
+  },
+  {
+    "event_id": "E0258",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-14T20:17:00"
+  },
+  {
+    "event_id": "E0259",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-14T22:38:00"
+  },
+  {
+    "event_id": "E0260",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T22:40:00"
+  },
+  {
+    "event_id": "E0261",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T22:42:00"
+  },
+  {
+    "event_id": "E0262",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-14T22:43:00"
+  },
+  {
+    "event_id": "E0263",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T06:00:00"
+  },
+  {
+    "event_id": "E0264",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "LEAVE",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T08:02:00"
+  },
+  {
+    "event_id": "E0265",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T08:04:00"
+  },
+  {
+    "event_id": "E0266",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "OFF",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T08:06:00"
+  },
+  {
+    "event_id": "E0267",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "LOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T08:08:00"
+  },
+  {
+    "event_id": "E0268",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T09:02:00"
+  },
+  {
+    "event_id": "E0269",
+    "household_id": "H001",
+    "device_id": "water_motor",
+    "device_type": "motor",
+    "room": "utility",
+    "action": "OFF",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T09:17:00"
+  },
+  {
+    "event_id": "E0270",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-15T13:37:00"
+  },
+  {
+    "event_id": "E0271",
+    "household_id": "H001",
+    "device_id": "kitchen_light",
+    "device_type": "light",
+    "room": "kitchen",
+    "action": "OFF",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-15T13:54:00"
+  },
+  {
+    "event_id": "E0272",
+    "household_id": "H001",
+    "device_id": "main_door",
+    "device_type": "door_lock",
+    "room": "entrance",
+    "action": "UNLOCK",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T18:29:00"
+  },
+  {
+    "event_id": "E0273",
+    "household_id": "H001",
+    "device_id": "livingroom_light",
+    "device_type": "light",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "mother",
+    "timestamp": "2026-06-15T18:30:00"
+  },
+  {
+    "event_id": "E0274",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T18:32:00"
+  },
+  {
+    "event_id": "E0275",
+    "household_id": "H001",
+    "device_id": "bedroom_fan",
+    "device_type": "fan",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T18:34:00"
+  },
+  {
+    "event_id": "E0276",
+    "household_id": "H001",
+    "device_id": "porch_light",
+    "device_type": "light",
+    "room": "porch",
+    "action": "ON",
+    "triggered_by": "system",
+    "timestamp": "2026-06-15T18:45:00"
+  },
+  {
+    "event_id": "E0277",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "ON",
+    "triggered_by": "family",
+    "timestamp": "2026-06-15T20:07:00"
+  },
+  {
+    "event_id": "E0278",
+    "household_id": "H001",
+    "device_id": "livingroom_tv",
+    "device_type": "tv",
+    "room": "living_room",
+    "action": "OFF",
+    "triggered_by": "family",
+    "timestamp": "2026-06-15T22:32:00"
+  },
+  {
+    "event_id": "E0279",
+    "household_id": "H001",
+    "device_id": "bedroom_light",
+    "device_type": "light",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T22:34:00"
+  },
+  {
+    "event_id": "E0280",
+    "household_id": "H001",
+    "device_id": "bedroom_ac",
+    "device_type": "ac",
+    "room": "bedroom",
+    "action": "ON",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T22:36:00"
+  },
+  {
+    "event_id": "E0281",
+    "household_id": "H001",
+    "device_id": "bedroom_presence",
+    "device_type": "presence",
+    "room": "bedroom",
+    "action": "ENTER",
+    "triggered_by": "son",
+    "timestamp": "2026-06-15T22:37:00"
+  }
+]

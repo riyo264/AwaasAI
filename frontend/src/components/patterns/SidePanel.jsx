@@ -221,35 +221,273 @@ function ContextView({ context, loading }) {
 
 /* ----------------------------------------------------------------- Patterns */
 
-function PatternsView({ patterns }) {
-  if (!patterns?.patterns?.length) return <Empty text="No patterns learned yet. Load demo data." />;
+// A pattern's "owning" device(s). Time/duration patterns own a single device;
+// a sequence touches several, so it surfaces under every device in its steps.
+function patternDevices(p) {
+  if (p.pattern_type === "sequence") {
+    return Array.from(
+      new Set((p.steps || []).map((s) => String(s).split(":")[0]).filter(Boolean)),
+    );
+  }
+  return p.device ? [p.device] : [];
+}
 
-  const groups = patterns.patterns.reduce((acc, p) => {
-    (acc[p.pattern_type] ||= []).push(p);
+function typeCounts(items) {
+  return items.reduce((acc, p) => {
+    acc[p.pattern_type] = (acc[p.pattern_type] || 0) + 1;
     return acc;
   }, {});
-  // Highest-confidence first within each group.
-  Object.values(groups).forEach((g) => g.sort((a, b) => b.confidence - a.confidence));
+}
+
+function humanizeId(id = "") {
+  return id.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function PatternsView({ patterns }) {
+  const all = patterns?.patterns || [];
+  const [mode, setMode] = useState("device"); // "device" | "type"
+  const [selectedDevice, setSelectedDevice] = useState(null);
+
+  // device -> patterns[] (sequences land under each participating device).
+  const deviceMap = useMemo(() => {
+    const m = new Map();
+    for (const p of all) {
+      for (const d of patternDevices(p)) {
+        if (!m.has(d)) m.set(d, []);
+        m.get(d).push(p);
+      }
+    }
+    return m;
+  }, [all]);
+
+  const deviceEntries = useMemo(
+    () =>
+      [...deviceMap.entries()].sort(
+        (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
+      ),
+    [deviceMap],
+  );
+
+  // Highest-confidence first within each pattern-type group.
+  const typeGroups = useMemo(() => {
+    const g = {};
+    for (const p of all) (g[p.pattern_type] ||= []).push(p);
+    Object.values(g).forEach((arr) => arr.sort((a, b) => b.confidence - a.confidence));
+    return g;
+  }, [all]);
+
+  if (!all.length) return <Empty text="No patterns learned yet. Load demo data." />;
+
+  const selectedItems = selectedDevice ? deviceMap.get(selectedDevice) || [] : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-2.5 text-[11px] text-slate-400">
-        <span className="font-semibold text-slate-200">{patterns.count}</span> patterns learned
-        deterministically from 30 days of events — never by an LLM.
+        <span className="font-semibold text-slate-200">{patterns.count ?? all.length}</span>{" "}
+        patterns across{" "}
+        <span className="font-semibold text-slate-200">{deviceMap.size}</span> devices —
+        learned deterministically, never by an LLM.
       </p>
 
-      {Object.entries(groups).map(([type, items]) => {
-        const meta = PATTERN_META[type] || { label: type, icon: "•", color: "" };
+      <Segmented
+        value={mode}
+        onChange={(m) => {
+          setMode(m);
+          setSelectedDevice(null);
+        }}
+        options={[
+          { value: "device", label: "By Device" },
+          { value: "type", label: "By Type" },
+        ]}
+      />
+
+      {mode === "device" &&
+        (selectedDevice ? (
+          <DeviceDetail
+            device={selectedDevice}
+            items={selectedItems}
+            onBack={() => setSelectedDevice(null)}
+          />
+        ) : (
+          <div className="space-y-2">
+            {deviceEntries.map(([device, items]) => (
+              <DeviceRow
+                key={device}
+                device={device}
+                items={items}
+                onClick={() => setSelectedDevice(device)}
+              />
+            ))}
+          </div>
+        ))}
+
+      {mode === "type" && (
+        <div className="space-y-2.5">
+          {Object.entries(typeGroups).map(([type, items]) => (
+            <CollapsibleGroup key={type} type={type} items={items} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Two-way pill toggle used to switch the patterns browser between views.
+function Segmented({ value, onChange, options }) {
+  return (
+    <div className="flex gap-1 rounded-lg bg-slate-800/60 p-1">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={[
+            "flex-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition",
+            value === o.value
+              ? "bg-sky-500/25 text-sky-100"
+              : "text-slate-400 hover:text-slate-200",
+          ].join(" ")}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// One row in the device master list — icon, name, per-type breakdown, count.
+function DeviceRow({ device, items, onClick }) {
+  const counts = typeCounts(items);
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-xl border border-slate-700/60 bg-slate-800/40 p-2.5 text-left transition hover:border-sky-500/50 hover:bg-slate-800/70"
+    >
+      <span className="text-lg leading-none">{deviceIcon(deviceTypeFromId(device))}</span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-slate-100">{humanizeId(device)}</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {Object.entries(counts).map(([t, n]) => {
+            const meta = PATTERN_META[t] || { icon: "•", color: "bg-slate-700/50 text-slate-300" };
+            return (
+              <span
+                key={t}
+                className={`rounded px-1 py-0.5 text-[9px] font-semibold ring-1 ${meta.color}`}
+              >
+                {meta.icon} {n}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+      <span className="flex items-center gap-1.5 text-slate-500">
+        <span className="rounded-full bg-slate-700/70 px-1.5 text-[10px] font-bold text-slate-300">
+          {items.length}
+        </span>
+        <span className="text-base">›</span>
+      </span>
+    </button>
+  );
+}
+
+// Drill-down for a single device: back link, header, type filter, cards.
+function DeviceDetail({ device, items, onBack }) {
+  const [typeFilter, setTypeFilter] = useState("all");
+  const counts = typeCounts(items);
+  const filtered = items
+    .filter((p) => typeFilter === "all" || p.pattern_type === typeFilter)
+    .sort((a, b) => b.confidence - a.confidence);
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1 text-[11px] font-semibold text-sky-300 transition hover:text-sky-200"
+      >
+        ← All devices
+      </button>
+
+      <div className="flex items-center gap-3 rounded-xl border border-slate-700/60 bg-linear-to-br from-slate-950/80 to-slate-900/40 p-3">
+        <span className="text-2xl leading-none">{deviceIcon(deviceTypeFromId(device))}</span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-slate-100">{humanizeId(device)}</p>
+          <p className="text-[10px] text-slate-500">
+            {items.length} pattern{items.length === 1 ? "" : "s"} learned
+          </p>
+        </div>
+      </div>
+
+      <TypeFilter value={typeFilter} onChange={setTypeFilter} counts={counts} />
+
+      <ul className="space-y-2.5">
+        {filtered.map((p) => (
+          <PatternCard
+            key={p.pattern_id}
+            p={p}
+            meta={PATTERN_META[p.pattern_type] || { label: p.pattern_type, icon: "•", color: "" }}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Chip row to filter a device's patterns by type (only shows types present).
+function TypeFilter({ value, onChange, counts }) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const options = [
+    { key: "all", label: "All", icon: "▦", n: total, color: "bg-slate-700/50 text-slate-200 ring-slate-500/40" },
+    ...["time_based", "sequence", "duration"]
+      .filter((t) => counts[t])
+      .map((t) => ({ key: t, ...PATTERN_META[t], n: counts[t] })),
+  ];
+  if (options.length <= 2) return null; // only one real type → no point filtering
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((o) => {
+        const active = value === o.key;
         return (
-          <Section key={type} title={`${meta.icon} ${meta.label} (${items.length})`}>
-            <ul className="space-y-2.5">
-              {items.map((p) => (
-                <PatternCard key={p.pattern_id} p={p} meta={meta} />
-              ))}
-            </ul>
-          </Section>
+          <button
+            key={o.key}
+            onClick={() => onChange(o.key)}
+            className={[
+              "rounded-md px-2 py-1 text-[10px] font-semibold ring-1 transition",
+              active ? o.color : "bg-slate-800/40 text-slate-400 ring-slate-700/60 hover:text-slate-200",
+            ].join(" ")}
+          >
+            {o.icon} {o.label} ({o.n})
+          </button>
         );
       })}
+    </div>
+  );
+}
+
+// Collapsible per-type section for the "By Type" view.
+function CollapsibleGroup({ type, items }) {
+  const [open, setOpen] = useState(true);
+  const meta = PATTERN_META[type] || { label: type, icon: "•", color: "" };
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-700/60">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between bg-slate-800/50 px-3 py-2 transition hover:bg-slate-800/80"
+      >
+        <span className="flex items-center gap-2">
+          <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ${meta.color}`}>
+            {meta.icon} {meta.label}
+          </span>
+          <span className="text-[11px] font-semibold text-slate-400">{items.length}</span>
+        </span>
+        <span className="text-slate-500">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <ul className="space-y-2.5 p-2.5">
+          {items.map((p) => (
+            <PatternCard key={p.pattern_id} p={p} meta={meta} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
