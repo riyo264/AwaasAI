@@ -312,10 +312,16 @@ export default function AlexaNotification({
     return () => clearTimeout(t);
   }, [notifications, muted, ttsSupported, tick]);
 
-  // Stop speech if the stack empties or unmounts.
+  // Stop speech if the stack empties or unmounts. Also reset both id-trackers so
+  // re-appearing concerns (e.g. SOS toggled off then on again) are treated as
+  // new and get spoken aloud rather than silently skipped.
   useEffect(() => {
     if (!ttsSupported) return;
-    if (notifications.length === 0) window.speechSynthesis.cancel();
+    if (notifications.length === 0) {
+      window.speechSynthesis.cancel();
+      spokenIds.current.clear();
+      knownIds.current.clear();
+    }
     return () => window.speechSynthesis.cancel();
   }, [notifications.length, ttsSupported]);
 

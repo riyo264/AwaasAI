@@ -570,59 +570,196 @@ function patternDetailChips(p) {
 /* ------------------------------------------------------------------- Events */
 
 function EventsView({ events, loading }) {
+  const todayStr = new Date().toLocaleDateString("en-CA");
+
+  const [viewMonth, setViewMonth] = useState(() => todayStr.slice(0, 7));
+  const [selectedDay, setSelectedDay] = useState(null);
   const [filter, setFilter] = useState("all");
 
-  const days = useMemo(() => groupByDay(events || []), [events]);
+  // Map of YYYY-MM-DD → events[]
+  const dayMap = useMemo(() => {
+    const m = new Map();
+    for (const e of events || []) {
+      const key = new Date(e.timestamp).toLocaleDateString("en-CA");
+      if (!m.has(key)) m.set(key, []);
+      m.get(key).push(e);
+    }
+    return m;
+  }, [events]);
+
   const rooms = useMemo(
     () => ["all", ...Array.from(new Set((events || []).map((e) => e.room))).sort()],
-    [events]
+    [events],
   );
 
-  if (!events) return <Empty text={loading ? "Loading event log…" : "No events yet."} />;
-  if (events.length === 0) return <Empty text="No events in the last 30 days. Load demo data." />;
+  // Max events in a single day — used to scale heat intensity
+  const maxCount = useMemo(() => {
+    let max = 1;
+    dayMap.forEach((evs) => { if (evs.length > max) max = evs.length; });
+    return max;
+  }, [dayMap]);
 
-  const filteredDays = days
-    .map(([day, evs]) => [day, filter === "all" ? evs : evs.filter((e) => e.room === filter)])
-    .filter(([, evs]) => evs.length > 0);
+  // Build the list of cells (nulls for leading blanks, then YYYY-MM-DD strings)
+  const calendarDays = useMemo(() => {
+    const [y, mo] = viewMonth.split("-").map(Number);
+    const firstDow = new Date(y, mo - 1, 1).getDay();
+    const lastDate = new Date(y, mo, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= lastDate; d++) {
+      cells.push(`${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+    }
+    return cells;
+  }, [viewMonth]);
+
+  const shiftMonth = (delta) => {
+    const [y, mo] = viewMonth.split("-").map(Number);
+    const d = new Date(y, mo - 1 + delta, 1);
+    setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedDay(null);
+  };
+
+  const monthLabel = useMemo(() => {
+    const [y, mo] = viewMonth.split("-").map(Number);
+    return new Date(y, mo - 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }, [viewMonth]);
+
+  // Events for the selected day, filtered and sorted newest-first
+  const selectedEvents = useMemo(() => {
+    if (!selectedDay) return [];
+    const evs = dayMap.get(selectedDay) || [];
+    return (filter === "all" ? evs : evs.filter((e) => e.room === filter))
+      .slice()
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }, [selectedDay, dayMap, filter]);
+
+  // Background intensity class based on event count relative to the busiest day
+  function heatClass(count) {
+    const r = count / maxCount;
+    if (r > 0.75) return "bg-sky-500/75 text-white";
+    if (r > 0.5)  return "bg-sky-500/50 text-sky-100";
+    if (r > 0.25) return "bg-sky-500/25 text-sky-200";
+    return "bg-sky-500/10 text-sky-300";
+  }
+
+  if (!events) return <Empty text={loading ? "Loading event log…" : "No events yet."} />;
+  if (!events.length) return <Empty text="No events in the last 30 days. Load demo data." />;
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-200">{events.length}</span> events · last 30 days
-        </p>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] text-slate-200 outline-none focus:border-sky-500"
-        >
-          {rooms.map((r) => (
-            <option key={r} value={r}>
-              {r === "all" ? "All rooms" : r.replaceAll("_", " ")}
-            </option>
+      <p className="text-[11px] text-slate-400">
+        <span className="font-semibold text-slate-200">{events.length}</span> events · last 30 days
+      </p>
+
+      {/* ── Calendar heat map ── */}
+      <div className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
+        {/* Month navigation */}
+        <div className="mb-2.5 flex items-center gap-2">
+          <button
+            onClick={() => shiftMonth(-1)}
+            className="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 transition hover:border-slate-500 hover:text-slate-200"
+          >
+            ‹
+          </button>
+          <span className="flex-1 text-center text-xs font-semibold text-slate-200">{monthLabel}</span>
+          <button
+            onClick={() => shiftMonth(1)}
+            className="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 transition hover:border-slate-500 hover:text-slate-200"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* Day-of-week header */}
+        <div className="mb-1 grid grid-cols-7 gap-0.5 text-center">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+            <span key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">{d}</span>
           ))}
-        </select>
+        </div>
+
+        {/* Day tiles */}
+        <div className="grid grid-cols-7 gap-0.5">
+          {calendarDays.map((day, i) => {
+            if (!day) return <div key={`blank-${i}`} className="py-1" />;
+            const count = dayMap.get(day)?.length ?? 0;
+            const isToday = day === todayStr;
+            const isSelected = day === selectedDay;
+            return (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(isSelected ? null : day)}
+                disabled={!count}
+                title={count ? `${count} event${count !== 1 ? "s" : ""}` : undefined}
+                className={[
+                  "flex flex-col items-center justify-center rounded-lg py-1.5 text-[11px] transition",
+                  count ? "cursor-pointer" : "cursor-default text-slate-700",
+                  isSelected
+                    ? `ring-2 ring-sky-400 ring-offset-1 ring-offset-slate-950 ${heatClass(count)}`
+                    : count
+                      ? `${heatClass(count)} hover:opacity-80`
+                      : "",
+                  isToday && !isSelected ? "ring-1 ring-slate-500" : "",
+                ].join(" ")}
+              >
+                <span className={isToday ? "font-bold" : "font-medium"}>
+                  {Number(day.split("-")[2])}
+                </span>
+                {count > 0 && (
+                  <span className="text-[8px] leading-none opacity-75">{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Heat legend */}
+        <div className="mt-2.5 flex items-center justify-end gap-1.5 text-[9px] text-slate-600">
+          <span>fewer</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/10" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/25" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/50" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/75" />
+          <span>more</span>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {filteredDays.map(([day, evs]) => (
-          <div key={day}>
-            <div className="sticky top-0 z-10 -mx-1 mb-1.5 flex items-center gap-2 bg-slate-900/80 px-1 py-1 backdrop-blur">
-              <h4 className="text-[11px] font-bold text-slate-300">{formatDayHeader(day)}</h4>
-              <span className="rounded-full bg-slate-700/60 px-1.5 text-[9px] font-semibold text-slate-300">
-                {evs.length}
-              </span>
-              <div className="h-px flex-1 bg-slate-700/50" />
+      {/* ── Day detail ── */}
+      {selectedDay ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-200">{formatDayHeader(selectedDay)}</h4>
+            <span className="rounded-full bg-slate-700/60 px-1.5 text-[9px] font-semibold text-slate-300">
+              {selectedEvents.length}
+            </span>
+            <div className="ml-auto">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] text-slate-200 outline-none focus:border-sky-500"
+              >
+                {rooms.map((r) => (
+                  <option key={r} value={r}>
+                    {r === "all" ? "All rooms" : r.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
             </div>
-
+          </div>
+          {selectedEvents.length === 0 ? (
+            <p className="text-center text-[11px] text-slate-500">No events match this filter.</p>
+          ) : (
             <ol className="relative ml-2 space-y-1.5 border-l border-slate-700/60 pl-3">
-              {evs.map((e) => (
+              {selectedEvents.map((e) => (
                 <EventRow key={e.event_id} e={e} />
               ))}
             </ol>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      ) : (
+        <p className="rounded-lg bg-slate-800/30 py-3 text-center text-[11px] text-slate-500">
+          Select a day above to view its event log
+        </p>
+      )}
     </div>
   );
 }
@@ -806,20 +943,6 @@ function deviceTypeFromId(id = "") {
   return "other";
 }
 
-function groupByDay(events) {
-  const groups = new Map();
-  for (const e of events) {
-    const key = new Date(e.timestamp).toLocaleDateString("en-CA"); // YYYY-MM-DD local
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(e);
-  }
-  return [...groups.entries()]
-    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
-    .map(([day, evs]) => [
-      day,
-      evs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
-    ]);
-}
 
 function formatDayHeader(dayKey) {
   const d = new Date(`${dayKey}T00:00:00`);

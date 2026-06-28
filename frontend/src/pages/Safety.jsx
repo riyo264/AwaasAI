@@ -182,7 +182,11 @@ export default function Safety() {
     (key) => {
       if (key === "window_night") {
         setClock("23:00");
-        turnDeviceOn("bedroom_window", isoAtClock("23:00"));
+        if (activeDevices.has("bedroom_window")) {
+          turnDeviceOff("bedroom_window");
+        } else {
+          turnDeviceOn("bedroom_window", isoAtClock("23:00"));
+        }
       } else if (key === "gas_left_on") {
         // Already overrunning: turned on ~60 min before the current clock.
         turnDeviceOn("kitchen_gas_stove", isoAtClock(clock, -60));
