@@ -137,7 +137,10 @@ async def narrate_context(context: ContextObject) -> NarrationResponse:
 
 
 @router.post("/narrate/each", response_model=NarrationListResponse)
-async def narrate_each_context(context: ContextObject) -> NarrationListResponse:
+async def narrate_each_context(
+    context: ContextObject,
+    language: str = Query("en", description="Narration language: en|hi|hinglish|ta|te|bn|mr."),
+) -> NarrationListResponse:
     """Narrate EACH detected issue as its own focused Alexa line.
 
     The frontend calls this instead of ``/narrate`` when it wants to show the
@@ -145,7 +148,7 @@ async def narrate_each_context(context: ContextObject) -> NarrationListResponse:
     anomaly gets its own LLM call (so no detail is lost to compression), and the
     list comes back ordered most-severe-first.
     """
-    items = await narrator.narrate_each(context)
+    items = await narrator.narrate_each(context, language)
     return NarrationListResponse(
         narrations=[NarrationItem(**item) for item in items]
     )

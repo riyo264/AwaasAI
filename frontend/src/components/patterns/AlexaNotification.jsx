@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import { getBcp47 } from "../../lib/lang.js";
 
-// Pick a pleasant English voice for the "Alexa" persona, preferring a female
-// voice when one is available. Voices load asynchronously in some browsers.
-function pickVoice() {
+// Pick the best available voice for the current narration language, preferring an
+// exact locale match (e.g. hi-IN), then the base language, then a pleasant
+// default. Voices load asynchronously in some browsers.
+function pickVoice(bcp47 = "en-IN") {
   const voices = window.speechSynthesis?.getVoices?.() || [];
   if (!voices.length) return null;
-  const en = voices.filter((v) => /^en(-|_|$)/i.test(v.lang));
-  const pool = en.length ? en : voices;
+  const target = bcp47.toLowerCase();
+  const base = target.split("-")[0];
+  const exact = voices.filter((v) => (v.lang || "").toLowerCase() === target);
+  const byBase = voices.filter((v) => (v.lang || "").toLowerCase().startsWith(base));
+  const pool = exact.length ? exact : byBase.length ? byBase : voices;
   const preferred = pool.find((v) =>
-    /samantha|female|zira|google us english|aria|jenny|alexa/i.test(v.name),
+    /samantha|female|zira|google|aria|jenny|alexa|swara|heera|neerja|kalpana|prabhat/i.test(v.name),
   );
   return preferred || pool[0];
 }
@@ -26,10 +31,11 @@ function NotificationCard({
   onToggleMute,
   onReplay,
   onDismiss,
+  defaultExpanded = false,
 }) {
   const [shown, setShown] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   // Slide in on mount.
   useEffect(() => {
@@ -237,6 +243,7 @@ export default function AlexaNotification({
   onDismiss,
   onDismissAll,
   maxVisible = 4,
+  autoExpandDetails = false,
 }) {
   const ttsSupported =
     typeof window !== "undefined" && "speechSynthesis" in window;
@@ -297,7 +304,9 @@ export default function AlexaNotification({
     const utter = new SpeechSynthesisUtterance(next.text);
     utter.rate = 1.02;
     utter.pitch = 1.0;
-    const voice = pickVoice();
+    const bcp47 = getBcp47();
+    utter.lang = bcp47;
+    const voice = pickVoice(bcp47);
     if (voice) utter.voice = voice;
     utter.onstart = () => setSpeakingId(next.id);
     const finish = () => {
@@ -339,7 +348,9 @@ export default function AlexaNotification({
     synth.cancel();
     const utter = new SpeechSynthesisUtterance(n.text);
     utter.rate = 1.02;
-    const voice = pickVoice();
+    const bcp47 = getBcp47();
+    utter.lang = bcp47;
+    const voice = pickVoice(bcp47);
     if (voice) utter.voice = voice;
     utter.onstart = () => setSpeakingId(n.id);
     const done = () => {
@@ -383,6 +394,7 @@ export default function AlexaNotification({
           onToggleMute={toggleMute}
           onReplay={replay}
           onDismiss={onDismiss}
+          defaultExpanded={autoExpandDetails}
         />
       ))}
 

@@ -50,6 +50,7 @@ async def assess(household_id: str, body: EvaluateStateRequest) -> GuardianDecis
         ignore_stored_events=body.ignore_stored_events,
         healthy_baseline=body.healthy_baseline,
         skip_completions=body.skip_completions,
+        language=body.language,
     )
 
 
@@ -59,6 +60,7 @@ class CheckinRespondRequest(BaseModel):
     audio_format: str = "webm"
     person: str = "your family member"
     concern_detail: str = Field("", description="What the check-in was about.")
+    language: str = Field("en", description="Reply language: en|hi|hinglish|ta|te|bn|mr.")
 
 
 @router.post("/{household_id}/checkin/respond", response_model=CheckinVerdict)
@@ -67,4 +69,4 @@ async def checkin_respond(household_id: str, body: CheckinRespondRequest) -> Che
     reply = (body.text or "").strip()
     if not reply and body.audio_base64:
         reply = await guardian.transcribe(body.audio_base64, body.audio_format or "webm")
-    return await guardian.checkin_respond(body.person, body.concern_detail, reply)
+    return await guardian.checkin_respond(body.person, body.concern_detail, reply, body.language)

@@ -62,7 +62,8 @@ def _learned_routine(household_id: str, sound_key: str) -> dict | None:
 _SEV_RANK = {"info": 0, "suggest": 1, "warn": 2, "alert": 3}
 
 
-async def _apply_sense(household_id: str, interp: dict, clock, people: list, active: list) -> dict:
+async def _apply_sense(household_id: str, interp: dict, clock, people: list, active: list,
+                       language: str = "en") -> dict:
     """Run the sense-making strategy (deterministic) and, when it flags the sound,
     generate a caring narration (LLM). Call AFTER the event is logged so counts
     include the current occurrence."""
@@ -80,7 +81,13 @@ async def _apply_sense(household_id: str, interp: dict, clock, people: list, act
         interp["sense_reason"] = sense["reason"]
         interp["evidence"] = sense["evidence"]
 
-    if sense["flagged"] or sense["always_narrate"]:
+    # Narrate EVERY recognised household sound through the narrator LLM — the
+    # flagged concerns AND the ordinary informational ones ("the chai's boiling",
+    # "someone's at the door") — so the home always speaks up with context.
+    # (Open-vocabulary Gemini sounds already carry their own spoken line.)
+    recognised = interp.get("recognised", True)
+    known = ambient_sounds.get_sound(interp.get("sound")) is not None
+    if recognised and (known or sense["flagged"] or sense["always_narrate"]):
         narr = await ambient_llm.narrate({
             "sound": interp.get("label"),
             "meaning": interp.get("meaning"),
@@ -92,7 +99,7 @@ async def _apply_sense(household_id: str, interp: dict, clock, people: list, act
             "time": clock.strftime("%H:%M"),
             "people_home": people,
             "active_devices": active,
-        })
+        }, language)
         interp["narration"] = narr.get("narration", "")
         interp["narration_llm"] = narr.get("narration_llm", False)
         interp["explanation"] = narr.get("explanation", "")
@@ -136,7 +143,7 @@ async def observe(household_id: str, body: AmbientObserveRequest) -> AmbientInte
         # Log FIRST so the sense-making counts include this occurrence.
         result["logged"] = _log_ambient(household_id, key, clock, body.confidence, "ambient_live")
 
-    await _apply_sense(household_id, result, clock, body.people_home, body.active_devices)
+    await _apply_sense(household_id, result, clock, body.people_home, body.active_devices, body.language)
     return AmbientInterpretation(**result)
 
 
@@ -241,7 +248,7 @@ async def listen(household_id: str, body: AmbientListenRequest) -> AmbientInterp
 
     # Sense-making runs on the reconciled canonical key (open-vocab has no profile).
     interp["sound"] = key if known else (key or "other")
-    await _apply_sense(household_id, interp, clock, body.people_home, body.active_devices)
+    await _apply_sense(household_id, interp, clock, body.people_home, body.active_devices, body.language)
     return AmbientInterpretation(**interp)
 
 

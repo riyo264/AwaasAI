@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import LanguageSelect from "./LanguageSelect";
 
 const NAV_ITEMS = [
   { to: "/",        label: "Mood",         Icon: Brain       },
@@ -102,6 +103,7 @@ export default function Layout() {
 
         {/* Footer */}
         <div className="mt-auto pt-4 border-t border-gray-800 space-y-3">
+          <LanguageSelect />
           {user && (
             <p className="text-xs text-gray-400 truncate" title={user.email}>
               {user.email}

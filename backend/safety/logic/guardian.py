@@ -110,7 +110,9 @@ def _rank_key(c: GuardianConcern) -> tuple[int, int]:
     return (1 if _is_extreme(c) else 0, _SEV_RANK.get(c.severity, 1))
 
 
-async def _triage(concerns: list[GuardianConcern], situation: str, person: str, now: datetime) -> dict | None:
+async def _triage(concerns: list[GuardianConcern], situation: str, person: str,
+                  now: datetime, language: str = "en") -> dict | None:
+    from safety.logic import lang
     settings = get_settings()
     payload = {
         "situation": situation,
@@ -121,7 +123,7 @@ async def _triage(concerns: list[GuardianConcern], situation: str, person: str, 
             for c in concerns
         ],
     }
-    return await _call_groq(TRIAGE_SYSTEM, json.dumps(payload), settings)
+    return await _call_groq(TRIAGE_SYSTEM + lang.directive(language), json.dumps(payload), settings)
 
 
 def _decision_shell(household_id: str, ctx, situation: str, vigilance: bool, person: str,
@@ -147,6 +149,7 @@ async def assess(
     ignore_stored_events: bool = False,
     healthy_baseline: bool = False,
     skip_completions: list[str] | None = None,
+    language: str = "en",
 ) -> GuardianDecision:
     ctx = context_service.evaluate_context(
         household_id,
@@ -181,7 +184,7 @@ async def assess(
     concerns_sorted = sorted(concerns, key=_rank_key, reverse=True)
     extreme = [c for c in concerns if _is_extreme(c)]
 
-    triage = await _triage(concerns, situation, person, now)
+    triage = await _triage(concerns, situation, person, now, language)
     decision.llm_powered = bool(triage)
 
     # LLM proposal (or deterministic fallback).
@@ -257,7 +260,9 @@ async def transcribe(audio_base64: str, fmt: str = "webm") -> str:
         return ""
 
 
-async def checkin_respond(person: str, concern_detail: str, reply_text: str) -> CheckinVerdict:
+async def checkin_respond(person: str, concern_detail: str, reply_text: str,
+                          language: str = "en") -> CheckinVerdict:
+    from safety.logic import lang
     reply = (reply_text or "").strip()
     low = reply.lower()
 
@@ -276,7 +281,7 @@ async def checkin_respond(person: str, concern_detail: str, reply_text: str) -> 
 
     settings = get_settings()
     payload = {"person": person, "concern": concern_detail, "reply": reply}
-    res = await _call_groq(CHECKIN_SYSTEM, json.dumps(payload), settings)
+    res = await _call_groq(CHECKIN_SYSTEM + lang.directive(language), json.dumps(payload), settings)
     if isinstance(res, dict) and res.get("verdict") in ("stand_down", "escalate"):
         verdict = res["verdict"]
         return CheckinVerdict(

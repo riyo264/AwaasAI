@@ -634,17 +634,19 @@ async def _call_bedrock(system: str, user_msg: str, settings) -> dict | None:
         return None
 
 
-async def narrate(context: ContextObject) -> dict:
+async def narrate(context: ContextObject, language: str = "en") -> dict:
     """Produce an Alexa-style spoken line + a detailed 'why' explanation.
 
     Returns ``{"alexa_response", "explanation", "llm_powered", "reasoning"}``.
     Always succeeds — falls back to deterministic text if the LLM is
     unavailable.
     """
+    from safety.logic import lang
     settings = get_settings()
     fallback = _fallback_line(context)
     fallback_explanation = _fallback_explanation(context)
 
+    system = SYSTEM_PROMPT + lang.directive(language)
     user_msg = _build_user_message(context)
     provider = (settings.llm_provider or "groq").lower().strip()
 
@@ -656,7 +658,7 @@ async def narrate(context: ContextObject) -> dict:
 
     for name, call_fn in providers:
         logger.info("Narrator: trying %s...", name)
-        parsed = await call_fn(SYSTEM_PROMPT, user_msg, settings)
+        parsed = await call_fn(system, user_msg, settings)
         if parsed:
             line = (parsed.get("alexa_response") or "").strip()
             explanation = (parsed.get("explanation") or "").strip()
@@ -761,7 +763,7 @@ def _single_anomaly_context(context: ContextObject, anomaly) -> ContextObject:
     )
 
 
-async def narrate_each(context: ContextObject) -> list[dict]:
+async def narrate_each(context: ContextObject, language: str = "en") -> list[dict]:
     """Narrate EACH detected issue as its own focused Alexa line.
 
     Instead of one prompt describing every anomaly at once (which forces the LLM
@@ -776,13 +778,13 @@ async def narrate_each(context: ContextObject) -> list[dict]:
     """
     anomalies = list(context.anomalies or [])
     if not anomalies:
-        one = await narrate(context)
+        one = await narrate(context, language)
         one.update({"device": None, "anomaly_type": None, "severity": "low"})
         return [one]
 
     ordered = _dedupe_by_device(anomalies)[:MAX_NARRATIONS]
     sub_contexts = [_single_anomaly_context(context, a) for a in ordered]
-    results = await asyncio.gather(*(narrate(c) for c in sub_contexts))
+    results = await asyncio.gather(*(narrate(c, language) for c in sub_contexts))
 
     out: list[dict] = []
     for anomaly, result in zip(ordered, results):

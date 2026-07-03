@@ -111,27 +111,36 @@ async def listen(audio_base64: str, mime_type: str, context: dict) -> dict | Non
 
 # ─── Narration of a FLAGGED sound (Groq text LLM) ────────────────────────────
 
-_NARRATE_SYSTEM = """You are Alexa, the caring voice of an Indian smart home. A deterministic engine
-has already decided a household SOUND is worth surfacing and WHY (it gives you the
-sound, the reason it's notable, the supporting numbers, and the live context —
-time, who's home, devices on). Your ONLY job is to phrase ONE short, warm, human
-line to say aloud, plus a brief 'why'.
+_NARRATE_SYSTEM = """You are Alexa, the caring voice of an Indian smart home. A household SOUND was
+just heard. You are given the sound, what it means, its severity, any reason it's
+notable + supporting numbers, and the live context (time, who's home, devices on).
+Speak it aloud like a warm, natural voice assistant.
 
 Rules:
-- Trust the engine's decision and numbers — do NOT invent new facts or numbers.
-- If a `reason` is given, your line MUST reflect that SPECIFIC insight (e.g. "the
-  cooker has whistled more than usual", "coughing repeatedly") — not a generic
-  remark. Weave in the concrete number from `evidence` when it's telling.
-- Match urgency to severity: calm/gentle for info, concerned for warn, urgent and
-  action-first for alert. Never alarm the family unnecessarily.
-- Be specific to Indian home life, under 30 words for the line.
-Return ONLY JSON: {"line": "<spoken line>", "explanation": "<one short why>"}"""
+- Your `line` should be 1-2 COMPLETE, conversational sentences (roughly 20-40
+  words) — like a real assistant talking to the family, NOT a terse 3-4 word
+  fragment. Acknowledge what you heard, then say what it means and (if useful)
+  what you'll do or suggest.
+- Trust the engine's facts/numbers — do NOT invent new ones.
+- If a `reason` is given (a flagged concern), the line MUST reflect that SPECIFIC
+  insight and weave in the concrete number from `evidence` (e.g. "The pressure
+  cooker has whistled five times now — well past its usual three, so it may have
+  been left on the flame. Shall I remind someone to check the kitchen?").
+- If there is NO specific concern (an ordinary sound, severity "info"), give a
+  brief, friendly heads-up in a full sentence (e.g. "I can hear the chai coming to
+  a boil in the kitchen — someone's making tea." / "There's someone at the door.").
+- Match tone to severity: calm and gentle for info, warm and concerned for
+  warn/suggest, urgent and action-first for alert. Never alarm the family
+  unnecessarily; stay natural and human.
+- Be specific to Indian home life.
+Return ONLY JSON: {"line": "<the spoken 1-2 sentence line>", "explanation": "<one short why>"}"""
 
 
-async def narrate(payload: dict) -> dict:
+async def narrate(payload: dict, language: str = "en") -> dict:
     """Phrase a flagged sound as a caring Alexa line. Falls back gracefully."""
+    from patterns.logic import lang
     settings = get_settings()
-    res = await _call_groq(_NARRATE_SYSTEM, json.dumps(payload), settings)
+    res = await _call_groq(_NARRATE_SYSTEM + lang.directive(language), json.dumps(payload), settings)
     if isinstance(res, dict) and res.get("line"):
         return {
             "narration": str(res["line"]).strip(),

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../patternsApi.js";
+import AlexaNotification from "../components/patterns/AlexaNotification.jsx";
 
 // ════════════════════════════════════════════════════════════════════════════
 //  AMBIENT CONTEXT — "The Household Ear"
@@ -92,6 +93,7 @@ export default function Ambient() {
   const [analyzing, setAnalyzing] = useState(false);
   const [level, setLevel] = useState(0);               // 0..1 VU meter
   const [toast, setToast] = useState(null);
+  const [alexaQueue, setAlexaQueue] = useState([]);   // spoken Alexa narrations
   // Continuous-listening audio plumbing (refs so the audio callback sees them).
   const audioCtxRef = useRef(null);
   const streamRef = useRef(null);
@@ -136,6 +138,23 @@ export default function Ambient() {
     r._id = `${Date.now()}-${r.sound}`;
     setFeed((f) => [r, ...f].slice(0, 30));
     if (r.recognised) loadRoutines();
+    // Speak it aloud through the Alexa narrator (flags AND informational sounds).
+    if (r.recognised !== false) {
+      const text = r.narration || r.prompt;
+      if (text) {
+        const alert = r.flagged || ["warn", "high", "critical", "alert"].includes(r.severity);
+        setAlexaQueue((q) => [
+          {
+            id: r._id,
+            text,
+            explanation: r.explanation || r.sense_reason || r.likely_activity || r.meaning || "",
+            llmPowered: !!(r.narration_llm || r.llm_powered),
+            tone: alert ? "alert" : "calm",
+          },
+          ...q,
+        ].slice(0, 6));
+      }
+    }
   }, [loadRoutines]);
 
   // ── Simulate path (deterministic /observe) ───────────────────────────────
@@ -475,6 +494,15 @@ export default function Ambient() {
           {toast}
         </div>
       )}
+
+      {/* Alexa speaks every recognised sound aloud (narrator LLM) */}
+      <AlexaNotification
+        notifications={alexaQueue}
+        onDismiss={(id) => setAlexaQueue((q) => q.filter((n) => n.id !== id))}
+        onDismissAll={() => setAlexaQueue([])}
+        maxVisible={3}
+        autoExpandDetails
+      />
     </div>
   );
 }

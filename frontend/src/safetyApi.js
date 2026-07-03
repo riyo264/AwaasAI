@@ -1,6 +1,8 @@
 // Thin API client for the Adaptive Safety Intelligence backend — an INDEPENDENT
 // twin of the patterns engine running on its own port (:8006). It never touches
 // the patterns service, so the two features are fully isolated.
+import { getLang } from "./lib/lang.js";
+
 const BASE =
   import.meta.env.VITE_SAFETY_API_BASE || "http://localhost:8006";
 
@@ -74,19 +76,19 @@ export const safetyApi = {
   guardianAssess: (householdId, body) =>
     request(`/guardian/${householdId}/assess`, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ language: getLang(), ...body }),
     }),
   // Interpret the person's reply to a check-in → stand down or escalate.
   guardianCheckin: (householdId, body) =>
     request(`/guardian/${householdId}/checkin/respond`, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ language: getLang(), ...body }),
     }),
 
   // Narrate each detected concern as its own spoken Alexa line (most-severe
   // first), so the dashboard can stack + read them one-by-one.
   narrateEach: (context) =>
-    request(`/context/narrate/each`, {
+    request(`/context/narrate/each?language=${getLang()}`, {
       method: "POST",
       body: JSON.stringify(context),
     }),

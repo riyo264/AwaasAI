@@ -18,6 +18,7 @@ class AmbientObserveRequest(BaseModel):
     people_home: list[str] = Field(default_factory=list)
     active_devices: list[str] = Field(default_factory=list, examples=[["kitchen_gas_stove"]])
     ingest: bool = Field(True, description="Log this sound as an event so routines keep learning.")
+    language: str = Field("en", description="Narration language: en|hi|hinglish|ta|te|bn|mr.")
 
 
 class AmbientListenRequest(BaseModel):
@@ -29,6 +30,7 @@ class AmbientListenRequest(BaseModel):
     people_home: list[str] = Field(default_factory=list)
     active_devices: list[str] = Field(default_factory=list)
     ingest: bool = Field(True, description="Log the detected sound so routines keep learning.")
+    language: str = Field("en", description="Narration language: en|hi|hinglish|ta|te|bn|mr.")
 
 
 class AmbientAction(BaseModel):

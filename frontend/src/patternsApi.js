@@ -2,6 +2,8 @@
 // patterns service). Local dev talks to it directly on :8003. In production
 // (ECS + ALB) set VITE_PATTERNS_API_BASE to the gateway/ALB path, e.g.
 // "https://<alb-host>/patterns".
+import { getLang } from "./lib/lang.js";
+
 const BASE = import.meta.env.VITE_PATTERNS_API_BASE || "http://localhost:8003";
 
 async function request(path, options = {}) {
@@ -63,7 +65,7 @@ export const api = {
   // device, anomaly_type, severity }, ...] } ordered most-severe-first, ready
   // to be shown/spoken one-by-one as a sequence of floating notifications.
   narrateEach: (context) =>
-    request(`/context/narrate/each`, {
+    request(`/context/narrate/each?language=${getLang()}`, {
       method: "POST",
       body: JSON.stringify(context),
     }),
@@ -108,7 +110,7 @@ export const api = {
   ambientObserve: (householdId, body) =>
     request(`/ambient/${householdId}/observe`, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ language: getLang(), ...body }),
     }),
   ambientRoutines: (householdId) => request(`/ambient/${householdId}/routines`),
 
@@ -146,7 +148,7 @@ export const api = {
   ambientListen: (householdId, body) =>
     request(`/ambient/${householdId}/listen`, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ language: getLang(), ...body }),
     }),
   ambientSeed: (householdId) =>
     request(`/ambient/${householdId}/seed`, { method: "POST" }),
