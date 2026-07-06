@@ -50,6 +50,31 @@ class RelevantPattern(BaseModel):
     time: str | None = None   # "HH:MM" the routine is anchored to, when known
 
 
+class PausedRoutine(BaseModel):
+    """A learned routine the day-aware filter paused for today (e.g. a weekday
+    school run that doesn't apply on a Sunday)."""
+
+    pattern_id: str
+    description: str
+    reason: str
+
+
+class DayAdaptation(BaseModel):
+    """Records how the learned routines were adapted for the current day.
+
+    On weekends and festival days a subset of strictly-weekday routines is
+    *paused* so they don't produce false 'missed routine' anomalies. On an
+    ordinary weekday this is inactive and no routine is touched.
+    """
+
+    active: bool = False              # was any pausing applied today
+    day_type: str = "weekday"         # "weekday" | "weekend"
+    festival: str | None = None       # festival name, when the day is one
+    llm_powered: bool = False         # True if the LLM decided, False if fallback
+    kept_count: int = 0               # routines still expected today
+    paused: list[PausedRoutine] = Field(default_factory=list)
+
+
 class ContextObject(BaseModel):
     """The structured context ready to be sent to Bedrock (future phase)."""
 
@@ -63,6 +88,9 @@ class ContextObject(BaseModel):
 
     relevant_patterns: list[RelevantPattern] = Field(default_factory=list)
     anomalies: list[Anomaly] = Field(default_factory=list)
+
+    # How routines were adapted for today (weekend / festival pausing).
+    day_adaptation: DayAdaptation | None = None
 
     # Compact recent-event tail to give the LLM short-term memory.
     recent_events: list[dict] = Field(default_factory=list)

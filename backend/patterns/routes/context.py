@@ -68,6 +68,25 @@ class EvaluateStateRequest(BaseModel):
             "duration-based anomalies; omit for a pure ON/OFF check."
         ),
     )
+    day_type: str | None = Field(
+        None,
+        description=(
+            "Optional 'weekday' | 'weekend' override for the demo. When set, "
+            "weekday-only routines are paused on weekends/festivals. None = "
+            "derive from the real date."
+        ),
+        examples=["weekend"],
+    )
+    festival: str | None = Field(
+        None,
+        description="Optional festival name for today (e.g. 'Diwali'); pauses weekday routines.",
+        examples=["Diwali"],
+    )
+
+    def day_override(self) -> dict | None:
+        if not self.day_type and not self.festival:
+            return None
+        return {"day_type": self.day_type, "festival": self.festival}
 
 
 def _resolve_now(at: str | None) -> datetime | None:
@@ -91,19 +110,34 @@ def _resolve_now(at: str | None) -> datetime | None:
 
 
 @router.get("/{household_id}", response_model=ContextObject)
-def get_context(
+async def get_context(
     household_id: str,
     at: str | None = Query(
         None,
         description="Simulated current time as HH:MM (or full ISO). Demo clock.",
         examples=["11:00"],
     ),
+    day_type: str | None = Query(
+        None,
+        description="Optional 'weekday' | 'weekend' override for the demo.",
+        examples=["weekend"],
+    ),
+    festival: str | None = Query(
+        None, description="Optional festival name for today (e.g. 'Diwali')."
+    ),
 ) -> ContextObject:
-    return context_service.generate_context(household_id, now=_resolve_now(at))
+    override = (
+        {"day_type": day_type, "festival": festival}
+        if (day_type or festival)
+        else None
+    )
+    return await context_service.generate_context(
+        household_id, now=_resolve_now(at), day_override=override
+    )
 
 
 @router.post("/{household_id}/evaluate", response_model=ContextObject)
-def evaluate_context(
+async def evaluate_context(
     household_id: str,
     body: EvaluateStateRequest,
 ) -> ContextObject:
@@ -112,14 +146,16 @@ def evaluate_context(
 
     This powers the frontend's "set the state, set the clock, hit Go" flow.
     The supplied state is evaluated in-memory only — nothing is persisted, so
-    the demo data is never mutated.
+    the demo data is never mutated. On weekends/festivals (via ``day_type`` /
+    ``festival``) weekday-only routines are paused so they don't false-flag.
     """
-    return context_service.evaluate_context(
+    return await context_service.evaluate_context(
         household_id,
         active_devices=body.active_devices,
         people_home=body.people_home,
         device_on_since=body.device_on_since,
         now=_resolve_now(body.current_time),
+        day_override=body.day_override(),
     )
 
 

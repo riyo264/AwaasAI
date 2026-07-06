@@ -10,26 +10,34 @@ from datetime import datetime
 from patterns.context_builder import build_context
 from patterns.models.context import ContextObject
 from patterns.models.state import HouseholdState
-from patterns.logic import event_service, pattern_service, state_service
+from patterns.logic import day_relevance, event_service, pattern_service, state_service
 
 # Recent-event tail window (days) for short-term memory in the context.
 RECENT_WINDOW_DAYS = 1
 
 
-def generate_context(household_id: str, *, now: datetime | None = None) -> ContextObject:
+async def generate_context(
+    household_id: str,
+    *,
+    now: datetime | None = None,
+    day_override: dict | None = None,
+) -> ContextObject:
     state = state_service.get_state(household_id)
     patterns = pattern_service.get_patterns(household_id)
     recent = event_service.get_recent_events(household_id, RECENT_WINDOW_DAYS)
-    return build_context(state, patterns, recent, now=now)
+    day = day_relevance.resolve_day(now, day_override)
+    patterns, adaptation = await day_relevance.adapt_patterns(household_id, patterns, day)
+    return build_context(state, patterns, recent, now=now, day_adaptation=adaptation)
 
 
-def evaluate_context(
+async def evaluate_context(
     household_id: str,
     *,
     active_devices: list[str],
     people_home: dict[str, bool] | None = None,
     device_on_since: dict[str, str] | None = None,
     now: datetime | None = None,
+    day_override: dict | None = None,
 ) -> ContextObject:
     """Evaluate a *user-supplied* what-if state against the learned patterns.
 
@@ -46,10 +54,12 @@ def evaluate_context(
     missed-routine is judged purely against that state, not historical events.
     """
     patterns = pattern_service.get_patterns(household_id)
+    day = day_relevance.resolve_day(now, day_override)
+    patterns, adaptation = await day_relevance.adapt_patterns(household_id, patterns, day)
     state = HouseholdState(
         household_id=household_id,
         active_devices=list(active_devices),
         people_home=people_home or {},
         device_on_since=device_on_since or {},
     )
-    return build_context(state, patterns, [], now=now)
+    return build_context(state, patterns, [], now=now, day_adaptation=adaptation)

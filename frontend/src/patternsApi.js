@@ -39,7 +39,7 @@ export const api = {
   // persisted, so repeated evaluations never pollute the demo data).
   evaluate: (
     householdId,
-    { at, activeDevices, peopleHome, deviceOnSince } = {},
+    { at, activeDevices, peopleHome, deviceOnSince, dayType, festival } = {},
   ) =>
     request(`/context/${householdId}/evaluate`, {
       method: "POST",
@@ -48,6 +48,10 @@ export const api = {
         active_devices: activeDevices || [],
         people_home: peopleHome || {},
         device_on_since: deviceOnSince || {},
+        // On weekends/festivals the backend pauses weekday-only routines so
+        // they don't false-flag as "missed". null day_type = derive from date.
+        day_type: dayType || null,
+        festival: festival || null,
       }),
     }),
 
@@ -152,6 +156,19 @@ export const api = {
     }),
   ambientSeed: (householdId) =>
     request(`/ambient/${householdId}/seed`, { method: "POST" }),
+
+  // ── Home profile: user-declared routines ────────────────────────────────
+  // Users can define their own schedules (device + action + time) which feed
+  // the anomaly engine as synthetic patterns with confidence=1.0.
+  getProfileRoutines: (householdId) =>
+    request(`/profile/${householdId}/routines`),
+  addProfileRoutine: (householdId, body) =>
+    request(`/profile/${householdId}/routines`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  deleteProfileRoutine: (householdId, routineId) =>
+    request(`/profile/${householdId}/routines/${routineId}`, { method: "DELETE" }),
 };
 
 export { BASE as API_BASE };

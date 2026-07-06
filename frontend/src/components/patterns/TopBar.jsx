@@ -6,6 +6,10 @@ export default function TopBar({
   onHouseholdChange,
   simTime,
   onSimTimeChange,
+  dayType,
+  onDayTypeChange,
+  festival,
+  onFestivalChange,
   peopleHome,
   onSeed,
   onRun,
@@ -56,6 +60,38 @@ export default function TopBar({
           className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs font-medium text-slate-100 outline-none focus:border-sky-500"
         />
       </label>
+
+      {/* Simulated day type + festival — pauses weekday-only routines */}
+      <div
+        className="flex items-center gap-1.5 text-xs text-slate-400"
+        title="Simulated day. On Weekend or a named festival, weekday-only routines (school run, office commute) are paused so they don't false-flag."
+      >
+        <span>🗓️</span>
+        <div className="flex overflow-hidden rounded-lg border border-slate-700">
+          {["weekday", "weekend"].map((d) => (
+            <button
+              key={d}
+              onClick={() => onDayTypeChange(d)}
+              className={[
+                "px-2 py-1.5 text-xs font-medium capitalize transition",
+                dayType === d
+                  ? "bg-amber-500/25 text-amber-200"
+                  : "bg-slate-800 text-slate-400 hover:text-slate-200",
+              ].join(" ")}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          value={festival || ""}
+          onChange={(e) => onFestivalChange(e.target.value)}
+          placeholder="Festival?"
+          title="Optional festival name (e.g. Diwali) — pauses weekday routines for the day."
+          className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs font-medium text-slate-100 outline-none placeholder:text-slate-600 focus:border-amber-500"
+        />
+      </div>
 
       {/* Presence pills */}
       <div className="flex items-center gap-1.5">

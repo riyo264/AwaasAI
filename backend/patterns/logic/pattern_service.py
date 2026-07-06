@@ -38,6 +38,7 @@ def extract_and_store(household_id: str) -> list[BasePattern]:
 
 def get_patterns(household_id: str) -> list[BasePattern]:
     from boto3.dynamodb.conditions import Key
+    from patterns.logic import profile_service
 
     table = get_table(get_settings().patterns_table)
     resp = table.query(KeyConditionExpression=Key("household_id").eq(household_id))
@@ -48,4 +49,12 @@ def get_patterns(household_id: str) -> list[BasePattern]:
             ExclusiveStartKey=resp["LastEvaluatedKey"],
         )
         items.extend(resp.get("Items", []))
-    return [pattern_from_item(i) for i in items]
+
+    learned = [pattern_from_item(i) for i in items]
+
+    try:
+        user_defined = profile_service.routines_as_patterns(household_id)
+    except Exception:
+        user_defined = []
+
+    return learned + user_defined

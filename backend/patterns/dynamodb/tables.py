@@ -80,6 +80,21 @@ def table_definitions() -> list[dict]:
             ],
             "BillingMode": "PAY_PER_REQUEST",
         },
+        {
+            # User-declared home profile routines: manually entered schedules
+            # (device + action + time) that seed the anomaly engine directly,
+            # without requiring event history to be learned.
+            "TableName": s.profiles_table,
+            "KeySchema": [
+                {"AttributeName": "household_id", "KeyType": "HASH"},
+                {"AttributeName": "routine_id", "KeyType": "RANGE"},
+            ],
+            "AttributeDefinitions": [
+                {"AttributeName": "household_id", "AttributeType": "S"},
+                {"AttributeName": "routine_id", "AttributeType": "S"},
+            ],
+            "BillingMode": "PAY_PER_REQUEST",
+        },
     ]
 
 

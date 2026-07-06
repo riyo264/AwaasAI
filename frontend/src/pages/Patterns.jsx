@@ -7,6 +7,7 @@ import AlexaNotification from "../components/patterns/AlexaNotification.jsx";
 import ContextualPatterns from "../components/patterns/ContextualPatterns.jsx";
 import ContextNotes from "../components/patterns/ContextNotes.jsx";
 import AdjustedRoutine from "../components/patterns/AdjustedRoutine.jsx";
+import HomeProfile from "../components/patterns/HomeProfile.jsx";
 
 function nowHHMM() {
   const d = new Date();
@@ -18,6 +19,10 @@ export default function Patterns() {
   // Bumped whenever the occasion overlay changes, so the adapted routine refetches.
   const [overlayVersion, setOverlayVersion] = useState(0);
   const [simTime, setSimTime] = useState(nowHHMM());
+  // Simulated day: on "weekend" or a named festival the backend pauses
+  // weekday-only routines so they don't false-flag as missed.
+  const [dayType, setDayType] = useState("weekday");
+  const [festival, setFestival] = useState("");
   const [state, setState] = useState(null);
   const [patterns, setPatterns] = useState(null);
   const [context, setContext] = useState(null);
@@ -80,6 +85,8 @@ export default function Patterns() {
           at: time,
           activeDevices: [...active],
           peopleHome: people || {},
+          dayType,
+          festival: festival.trim() || null,
         });
         setContext(c);
         setDirty(false);
@@ -93,7 +100,7 @@ export default function Patterns() {
         setBusy(false);
       }
     },
-    [householdId, simTime, draftActive, state, flash, speak],
+    [householdId, simTime, draftActive, state, dayType, festival, flash, speak],
   );
 
   // Load reference data (patterns, persisted snapshot, events). The floor plan
@@ -166,6 +173,16 @@ export default function Patterns() {
     setDirty(true);
   }, []);
 
+  // Changing the simulated day / festival also marks the scenario dirty.
+  const handleDayType = useCallback((d) => {
+    setDayType(d);
+    setDirty(true);
+  }, []);
+  const handleFestival = useCallback((f) => {
+    setFestival(f);
+    setDirty(true);
+  }, []);
+
   const handleSeed = useCallback(async () => {
     setBusy(true);
     try {
@@ -192,6 +209,10 @@ export default function Patterns() {
         onHouseholdChange={setHouseholdId}
         simTime={simTime}
         onSimTimeChange={handleSimTime}
+        dayType={dayType}
+        onDayTypeChange={handleDayType}
+        festival={festival}
+        onFestivalChange={handleFestival}
         peopleHome={state?.people_home}
         onSeed={handleSeed}
         onRun={() => runCheck()}
@@ -210,6 +231,8 @@ export default function Patterns() {
             busy={busy}
           />
           <Legend dirty={dirty} />
+          <DayAdaptationBanner adaptation={context?.day_adaptation} />
+          <HomeProfile householdId={householdId} />
           <ContextNotes
             householdId={householdId}
             refreshKey={overlayVersion}
@@ -254,6 +277,47 @@ export default function Patterns() {
         maxVisible={4}
       />
     </div>
+  );
+}
+
+// Shows how the learned routines were adapted for the simulated day: on a
+// weekend / festival, weekday-only routines are paused so they don't false-flag.
+function DayAdaptationBanner({ adaptation }) {
+  if (!adaptation || !adaptation.active) return null;
+  const { day_type, festival, paused, kept_count, llm_powered } = adaptation;
+  const dayLabel = festival || (day_type === "weekend" ? "the weekend" : "today");
+  return (
+    <section className="overflow-hidden rounded-2xl border border-amber-500/40 bg-amber-500/[0.06]">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/20 text-base">
+          🗓️
+        </span>
+        <div className="leading-tight">
+          <p className="text-sm font-bold text-amber-100">
+            Routines adapted for {dayLabel}
+          </p>
+          <p className="text-[10px] text-amber-200/70">
+            {paused.length} weekday-only {paused.length === 1 ? "routine" : "routines"} paused ·{" "}
+            {kept_count} still expected ·{" "}
+            {llm_powered ? "decided by LLM" : "keyword fallback"}
+          </p>
+        </div>
+      </div>
+      <ul className="flex flex-col gap-1 px-4 pb-3">
+        {paused.map((p) => (
+          <li
+            key={p.pattern_id}
+            className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-slate-950/30 px-2.5 py-1.5"
+          >
+            <span className="mt-0.5 text-xs">⛔</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-slate-200">{p.description}</p>
+              <p className="text-[10px] italic text-amber-200/60">↳ {p.reason}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

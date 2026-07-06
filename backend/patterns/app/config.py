@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     patterns_table: str = "SmartHome_Patterns"
     # Temporary, user-driven pattern adjustments (guests / festivals) overlay.
     adjustments_table: str = "SmartHome_ContextAdjustments"
+    # User-declared home profile routines (device + action + time, manually set).
+    profiles_table: str = "SmartHome_HomeProfiles"
 
     # --- Pattern engine tuning ---
     # How many days of history the extraction job analyses.

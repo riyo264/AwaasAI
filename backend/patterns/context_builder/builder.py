@@ -24,6 +24,7 @@ from patterns.models.context import (
     AnomalyType,
     ContextObject,
     ContextType,
+    DayAdaptation,
     RelevantPattern,
 )
 from patterns.models.events import Event
@@ -122,6 +123,7 @@ def build_context(
     patterns: list[BasePattern],
     recent_events: list[Event],
     now: datetime | None = None,
+    day_adaptation: DayAdaptation | None = None,
 ) -> ContextObject:
     now = now or datetime.now(timezone.utc)
 
@@ -137,6 +139,7 @@ def build_context(
         active_devices=state.active_devices,
         relevant_patterns=relevant,
         anomalies=anomalies,
+        day_adaptation=day_adaptation,
         recent_events=[
             {
                 "timestamp": e.timestamp.isoformat(),

@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from patterns.app.config import get_settings
-from patterns.routes import admin, ambient, context, context_notes, events, patterns, state
+from patterns.routes import admin, ambient, context, context_notes, events, patterns, profile, state
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(patterns.router)
     app.include_router(context.router)
     app.include_router(context_notes.router)
+    app.include_router(profile.router)
     app.include_router(admin.router)
     app.include_router(ambient.router)
     return app
