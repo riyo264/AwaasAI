@@ -93,7 +93,7 @@ export default function SidePanel({ context, patterns, state, events, loading })
 
 /* ------------------------------------------------------------------ Context */
 
-function ContextView({ context, loading }) {
+export function ContextView({ context, loading }) {
   if (!context) {
     return <Empty text={loading ? "Generating context…" : "All normal. Paint the device states and hit ▶ Go to run a check."} />;
   }
@@ -243,7 +243,7 @@ function humanizeId(id = "") {
   return id.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function PatternsView({ patterns }) {
+export function PatternsView({ patterns }) {
   const all = patterns?.patterns || [];
   const [mode, setMode] = useState("device"); // "device" | "type"
   const [selectedDevice, setSelectedDevice] = useState(null);
@@ -569,7 +569,7 @@ function patternDetailChips(p) {
 
 /* ------------------------------------------------------------------- Events */
 
-function EventsView({ events, loading }) {
+export function EventsView({ events, loading }) {
   const todayStr = new Date().toLocaleDateString("en-CA");
 
   const [viewMonth, setViewMonth] = useState(() => todayStr.slice(0, 7));
@@ -786,7 +786,7 @@ function EventRow({ e }) {
 
 /* -------------------------------------------------------------------- State */
 
-function StateView({ state }) {
+export function StateView({ state }) {
   if (!state) return <Empty text="No state yet." />;
   return (
     <div className="space-y-4">

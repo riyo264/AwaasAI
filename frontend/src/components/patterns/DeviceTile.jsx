@@ -25,7 +25,7 @@ export default function DeviceTile({ device, isOn, anomaly, onToggle, busy }) {
       <span
         className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-lg transition-transform group-hover:scale-110"
         style={{
-          background: isOn ? `${kind.onColor}22` : "#0f172a",
+          background: isOn ? `${kind.onColor}22` : "var(--color-slate-800)",
           filter: isOn ? "none" : "grayscale(0.7) opacity(0.8)",
         }}
       >

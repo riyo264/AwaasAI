@@ -1,37 +1,91 @@
-import DeviceTile from "./DeviceTile.jsx";
+import DeviceSpot from "./DeviceSpot.jsx";
+import { ROOMS } from "../../config/houseLayout.js";
 
-// A room zone on the floor plan. Renders its label, accent, and device tiles.
-export default function Room({ room, devices, activeSet, anomalyMap, onToggle, busy }) {
+// One space on the floor plan, drawn at its real position: wall partitions,
+// door openings, an accent-tinted floor, and devices at their physical spots.
+// Outdoor spaces (porch / terrace / garden) get dashed open-air boundaries.
+export default function Room({ space, devices, activeSet, anomalyMap, onToggle, busy }) {
+  const meta = ROOMS[space.key];
+  const name = space.name ?? meta?.name ?? space.key;
+  const accent = meta?.accent ?? "#64748b";
+  const hasDevices = devices.length > 0;
+
   return (
     <div
-      className="relative flex flex-col rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3 shadow-lg"
-      style={{ gridColumn: room.col, gridRow: room.row }}
+      className={[
+        "absolute",
+        space.outdoor
+          ? "rounded-md border-2 border-dashed border-slate-600/60"
+          : "border-2",
+      ].join(" ")}
+      style={{
+        left: `${space.x}%`,
+        top: `${space.y}%`,
+        width: `${space.w}%`,
+        height: `${space.h}%`,
+        borderColor: space.outdoor ? undefined : "var(--pp-border-strong)",
+        background: hasDevices
+          ? `color-mix(in srgb, ${accent} 9%, var(--pp-inset))`
+          : "var(--pp-inset)",
+      }}
     >
-      <div className="mb-2 flex items-center gap-2">
+      {/* Room label */}
+      <div className="pointer-events-none absolute left-2 top-1.5 z-6 flex items-center gap-1.5">
         <span
-          className="h-2.5 w-2.5 rounded-full"
-          style={{ background: room.accent, boxShadow: `0 0 8px ${room.accent}` }}
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{
+            background: accent,
+            boxShadow: hasDevices ? `0 0 8px ${accent}` : "none",
+            opacity: hasDevices ? 1 : 0.45,
+          }}
         />
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-          {room.name}
-        </h3>
+        <span
+          className={[
+            "truncate text-[13px] font-bold uppercase tracking-wider",
+            hasDevices ? "text-slate-300" : "text-slate-500",
+          ].join(" ")}
+        >
+          {name}
+        </span>
       </div>
 
-      <div className="grid flex-1 content-start gap-2">
-        {devices.map((d) => (
-          <DeviceTile
-            key={d.id}
-            device={d}
-            isOn={activeSet.has(d.id)}
-            anomaly={anomalyMap.get(d.id)}
-            onToggle={onToggle}
-            busy={busy}
-          />
-        ))}
-        {devices.length === 0 && (
-          <p className="text-[11px] italic text-slate-600">no devices</p>
-        )}
-      </div>
+      {/* Door openings on the walls */}
+      {(space.doors || []).map((door, i) => (
+        <DoorGap key={i} door={door} />
+      ))}
+
+      {/* Devices pinned at their physical positions */}
+      {devices.map((d) => (
+        <DeviceSpot
+          key={d.id}
+          device={d}
+          isOn={activeSet.has(d.id)}
+          anomaly={anomalyMap.get(d.id)}
+          onToggle={onToggle}
+          busy={busy}
+        />
+      ))}
     </div>
   );
+}
+
+// A door opening: a wooden threshold bar bridging the wall between two spaces.
+function DoorGap({ door }) {
+  const horizontal = door.side === "top" || door.side === "bottom";
+  const style = horizontal
+    ? {
+        left: `${door.at}%`,
+        [door.side]: -8,
+        width: 22,
+        height: 12,
+        transform: "translateX(-50%)",
+      }
+    : {
+        top: `${door.at}%`,
+        [door.side]: -8,
+        width: 12,
+        height: 22,
+        transform: "translateY(-50%)",
+      };
+  return <span className="absolute z-5 rounded-[3px] bg-[#b98a4a]" style={style} />;
 }

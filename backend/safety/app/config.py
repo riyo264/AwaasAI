@@ -14,8 +14,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Strongly-typed settings loaded from environment variables / .env."""
 
+    # Load the safety service's own .env first, then fall back to a shared
+    # backend/.env or repo-root .env — so the Groq key (and other secrets) set
+    # once for the patterns/ambient services are picked up here too, instead of
+    # the narrator silently falling back to templated text.
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env", "../../.env", "backend/.env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

@@ -172,6 +172,10 @@ def assess(
             f"most pressing: {lead.detail or lead.type.value}.{vuln_note}"
         )
 
+    # Defense-in-depth: group the (escalated) anomalies into the three layers
+    # and score how strongly they corroborate each other.
+    from safety.logic.safety_layers import build_layers
+
     context.safety = SafetyAssessment(
         status=status,
         safety_score=round(score, 1),
@@ -189,6 +193,7 @@ def assess(
         ),
         vulnerability_factor=round(factor, 2),
         rationale=rationale,
+        layers=build_layers(context.anomalies),
     )
 
     # Promote the headline context type for emergencies / safety alerts so the

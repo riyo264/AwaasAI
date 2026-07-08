@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import {
   Brain,
@@ -25,14 +25,28 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  // Mobile: slide-in drawer. Desktop: collapse to an icon-only rail.
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("sidebar-collapsed") === "true",
+  );
+
+  useEffect(() => {
+    localStorage.setItem("sidebar-collapsed", String(collapsed));
+  }, [collapsed]);
+
+  // `hideOnCollapse` hides an element ONLY on desktop when collapsed — the
+  // mobile drawer always shows full labels, so it stays visible below lg.
+  const hideOnCollapse = collapsed ? "lg:hidden" : "";
 
   const desktopLink = ({ isActive }) =>
-    `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm ${
+    [
+      "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm",
+      collapsed ? "lg:justify-center lg:px-2" : "",
       isActive
         ? "bg-indigo-600 text-white"
-        : "text-gray-400 hover:text-white hover:bg-gray-800"
-    }`;
+        : "text-gray-400 hover:text-white hover:bg-gray-800",
+    ].join(" ");
 
   const mobileLink = ({ isActive }) =>
     `flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors text-[10px] font-medium ${
@@ -50,35 +64,56 @@ export default function Layout() {
         />
       )}
 
-      {/* ── Sidebar (desktop: always visible · mobile: slide-in drawer) ───── */}
+      {/* ── Sidebar (desktop: collapsible rail · mobile: slide-in drawer) ──── */}
       <aside
         className={[
           "fixed inset-y-0 left-0 z-30 flex flex-col w-64",
           "bg-gray-900 border-r border-gray-800 p-6",
-          "transition-transform duration-300 ease-in-out",
+          "transition-all duration-300 ease-in-out",
           // On desktop always show; on mobile slide in/out
           "lg:static lg:translate-x-0 lg:z-auto",
+          collapsed ? "lg:w-20 lg:px-3" : "lg:w-64",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
       >
-        {/* Logo row + close button (mobile only) */}
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        {/* Logo row + collapse toggle (desktop) / close button (mobile) */}
+        <div
+          className={[
+            "mb-8 flex gap-3",
+            collapsed
+              ? "items-center lg:flex-col lg:gap-4"
+              : "items-center justify-between",
+          ].join(" ")}
+        >
+          {/* Desktop collapse / expand toggle (burger) */}
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            className="hidden lg:flex items-center justify-center shrink-0 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand menu" : "Collapse menu"}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* Logo — icon always shown; the text collapses away on desktop */}
+          <div className="flex items-center gap-3 min-w-0">
             <img
               src="/Amazon_Alexa_blue_logo.svg"
               alt="Amazon Alexa"
               className="h-8 w-8 shrink-0"
             />
-            <div>
+            <div className={`min-w-0 ${hideOnCollapse}`}>
               <h1 className="text-lg font-bold text-white leading-tight">
                 Awaas AI
               </h1>
               <p className="text-[13px] text-gray-500">Powered by Amazon Alexa</p>
             </div>
           </div>
+
+          {/* Mobile drawer close */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-500 hover:text-white p-1 rounded-md"
+            className="lg:hidden ml-auto text-gray-500 hover:text-white p-1 rounded-md"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -94,31 +129,41 @@ export default function Layout() {
               end={to === "/"}
               className={desktopLink}
               onClick={() => setSidebarOpen(false)}
+              title={collapsed ? label : undefined}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              {label}
+              <span className={hideOnCollapse}>{label}</span>
             </NavLink>
           ))}
         </nav>
 
         {/* Footer */}
         <div className="mt-auto pt-4 border-t border-gray-800 space-y-3">
-          <LanguageSelect />
+          <div className={hideOnCollapse}>
+            <LanguageSelect />
+          </div>
           {user && (
-            <p className="text-xs text-gray-400 truncate" title={user.email}>
+            <p
+              className={`text-xs text-gray-400 truncate ${hideOnCollapse}`}
+              title={user.email}
+            >
               {user.email}
             </p>
           )}
           <button
             onClick={logout}
-            className="flex items-center gap-2 w-full px-4 py-2 rounded-lg
-                       text-gray-400 hover:text-red-400 hover:bg-gray-800
-                       transition-colors text-sm"
+            title={collapsed ? "Sign Out" : undefined}
+            className={[
+              "flex items-center gap-2 w-full px-4 py-2 rounded-lg",
+              "text-gray-400 hover:text-red-400 hover:bg-gray-800",
+              "transition-colors text-sm",
+              collapsed ? "lg:justify-center lg:px-2" : "",
+            ].join(" ")}
           >
-            <LogOut className="w-4 h-4" />
-            Sign Out
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className={hideOnCollapse}>Sign Out</span>
           </button>
-          <p className="text-xs text-gray-600">
+          <p className={`text-xs text-gray-600 ${hideOnCollapse}`}>
             Powered by Nvidia Nemotron on AWS Bedrock
           </p>
         </div>

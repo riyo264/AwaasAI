@@ -1,8 +1,216 @@
 @import "tailwindcss";
 
-/* ── Pattern Recognition view (merged from the standalone patterns app) ── */
+/* ══════════════════════════════════════════════════════════════════════════
+   Patterns page theme — Amazon colour system (dark = Squid Ink, light = AWS)
+   Scoped under [data-ptheme] so the rest of the app is untouched.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-/* Pulsing red glow for anomalous devices */
+[data-ptheme="dark"] {
+    --pp-bg: #131a22;
+    /* Squid Ink */
+    --pp-surface: #1f2b38;
+    --pp-surface-2: #26323f;
+    --pp-inset: #16202b;
+    --pp-border: #34424f;
+    --pp-border-strong: #47586a;
+    --pp-text: #f4f6f7;
+    --pp-text-2: #d9e0e6;
+    --pp-muted: #a4b1bd;
+    --pp-subtle: #7a8794;
+    --pp-accent: #ff9900;
+    /* Amazon Orange */
+    --pp-accent-text: #ffb44d;
+    --pp-accent-weak: rgba(255, 153, 0, 0.14);
+    --pp-blue: #4da1e0;
+    --pp-blue-weak: rgba(77, 161, 224, 0.14);
+    --pp-ok: #34d399;
+    --pp-ok-weak: rgba(52, 211, 153, 0.13);
+    --pp-warn: #ffab3f;
+    --pp-danger: #ff6b6b;
+    --pp-danger-weak: rgba(255, 107, 107, 0.12);
+    --pp-shadow: rgba(0, 0, 0, 0.45);
+    --pp-scroll: #34424f;
+}
+
+[data-ptheme="light"] {
+    --pp-bg: #eef1f2;
+    /* AWS console gray */
+    --pp-surface: #ffffff;
+    --pp-surface-2: #f4f6f7;
+    --pp-inset: #e9edee;
+    --pp-border: #d3dade;
+    --pp-border-strong: #b4bfc5;
+    --pp-text: #0f1111;
+    /* Amazon near-black */
+    --pp-text-2: #232f3e;
+    --pp-muted: #4d5a66;
+    --pp-subtle: #6c7883;
+    --pp-accent: #ff9900;
+    --pp-accent-text: #b45f00;
+    --pp-accent-weak: rgba(255, 153, 0, 0.16);
+    --pp-blue: #0972d3;
+    /* AWS blue */
+    --pp-blue-weak: rgba(9, 114, 211, 0.10);
+    --pp-ok: #037f51;
+    --pp-ok-weak: rgba(3, 127, 81, 0.10);
+    --pp-warn: #8a6116;
+    --pp-danger: #d13212;
+    --pp-danger-weak: rgba(209, 50, 18, 0.09);
+    --pp-shadow: rgba(15, 34, 58, 0.10);
+    --pp-scroll: #c3ccd2;
+}
+
+/* ── Palette remap ────────────────────────────────────────────────────────
+   Tailwind v4 compiles `bg-slate-900` → `var(--color-slate-900)`, so remapping
+   the slate ramp per-theme re-skins EVERY existing panel automatically:
+   dark = Amazon Squid Ink, light = AWS-console (the ramp is inverted so
+   surfaces go light and text goes dark).                                       */
+[data-ptheme="dark"] {
+    --color-slate-950: #10171f;
+    --color-slate-900: #18222c;
+    --color-slate-800: #232f3b;
+    --color-slate-700: #33414f;
+    --color-slate-600: #45535f;
+    --color-slate-500: #6b7885;
+    --color-slate-400: #9aa7b3;
+    --color-slate-300: #c2ccd4;
+    --color-slate-200: #dbe2e7;
+    --color-slate-100: #eef2f4;
+    --color-slate-50: #f7f9fa;
+}
+
+[data-ptheme="light"] {
+    --color-slate-950: #ffffff;
+    --color-slate-900: #f5f7f8;
+    --color-slate-800: #eaeded;
+    --color-slate-700: #d5dbdb;
+    --color-slate-600: #9aa4ac;
+    --color-slate-500: #64707b;
+    --color-slate-400: #55616c;
+    --color-slate-300: #3d4853;
+    --color-slate-200: #29333d;
+    --color-slate-100: #16202b;
+    --color-slate-50: #0f1111;
+
+    /* Deepen the most-used accent *text* colours so they stay legible on white
+       (the low-opacity accent *fills* are left alone). */
+    --color-sky-300: #0972d3;
+    --color-sky-200: #0b5fa8;
+    --color-emerald-300: #037f51;
+    --color-emerald-200: #0a6b47;
+    --color-red-300: #d13212;
+    --color-red-200: #b02a0f;
+    --color-amber-300: #8a6116;
+    --color-amber-200: #6f4e12;
+    --color-violet-300: #6d3fc4;
+    --color-violet-200: #5a34a3;
+    --color-orange-300: #b45f00;
+    --color-indigo-300: #4f46e5;
+    --color-indigo-200: #4338ca;
+    --color-teal-300: #0f766e;
+    --color-teal-200: #115e59;
+    --color-cyan-300: #0e7490;
+    --color-orange-200: #9a4d00;
+    --color-rose-400: #e11d48;
+    --color-rose-300: #be123c;
+    --color-rose-200: #9f1239;
+    --color-fuchsia-300: #a21caf;
+    --color-fuchsia-200: #86198f;
+}
+
+/* Page canvas — fills the route, sets base colours + a comfortable font size */
+.pp-app {
+    background: var(--pp-bg);
+    color: var(--pp-text);
+    font-size: 15px;
+    line-height: 1.5;
+    border-radius: 1rem;
+}
+
+/* Semantic surface helpers (used across every panel so both themes stay clean) */
+.pp-panel {
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+}
+
+.pp-panel-2 {
+    background: var(--pp-surface-2);
+    border: 1px solid var(--pp-border);
+}
+
+.pp-inset {
+    background: var(--pp-inset);
+}
+
+.pp-hover:hover {
+    border-color: var(--pp-border-strong);
+}
+
+.pp-text {
+    color: var(--pp-text);
+}
+
+.pp-text-2 {
+    color: var(--pp-text-2);
+}
+
+.pp-muted {
+    color: var(--pp-muted);
+}
+
+.pp-subtle {
+    color: var(--pp-subtle);
+}
+
+.pp-accent {
+    color: var(--pp-accent-text);
+}
+
+/* Primary action (Amazon orange) + Run action (AWS blue) */
+.pp-btn-primary {
+    background: var(--pp-accent);
+    color: #131a22;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.pp-btn-primary:hover {
+    filter: brightness(1.06);
+}
+
+.pp-btn-primary:disabled {
+    opacity: 0.5;
+}
+
+.pp-btn {
+    background: var(--pp-surface-2);
+    color: var(--pp-text-2);
+    border: 1px solid var(--pp-border);
+}
+
+.pp-btn:hover {
+    border-color: var(--pp-border-strong);
+}
+
+/* Section-nav pill (the "explore" heading buttons) */
+.pp-tab {
+    background: var(--pp-surface);
+    color: var(--pp-muted);
+    border: 1px solid var(--pp-border);
+}
+
+.pp-tab:hover {
+    color: var(--pp-text);
+    border-color: var(--pp-border-strong);
+}
+
+.pp-tab[data-open="true"] {
+    background: var(--pp-accent-weak);
+    color: var(--pp-accent-text);
+    border-color: var(--pp-accent);
+}
+
+/* ── Pattern-recognition device animations ─────────────────────────────── */
 @keyframes anomalyPulse {
 
     0%,
@@ -19,17 +227,17 @@
     animation: anomalyPulse 1.4s ease-in-out infinite;
 }
 
-/* Soft glow for active (ON) devices */
 .active-glow {
     box-shadow: 0 0 16px 2px rgba(56, 189, 248, 0.45);
 }
 
+/* Theme-aware scrollbars */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--pp-scroll, #334155);
     border-radius: 8px;
 }

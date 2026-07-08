@@ -1,8 +1,14 @@
 // Floor-plan + device catalogue, driven entirely by data so the same canvas
-// renders any household. Each household maps device_ids -> a room + render meta.
+// renders any household.
 //
-// Grid: a 3-column x 3-row top-view house. Rooms declare their grid placement;
-// devices declare which room they live in plus an icon and toggle semantics.
+// The house is drawn as an ARCHITECTURAL TOP VIEW (a cross-section from above):
+// - FLOOR_PLANS gives every space a real rectangle (x/y/w/h as % of the canvas),
+//   an outer load-bearing wall, and door openings between rooms.
+// - Each device carries a `pos` — its physical spot inside its room (% of the
+//   room rect) — so appliances sit where they would in a real home.
+// ROOMS keeps the display name + accent colour per room key. The col/row grid
+// fields are ONLY used by the Devices page (DeviceControl), which still lays
+// rooms out on a simple 3x3 grid — the Patterns floor plan ignores them.
 
 export const ROOMS = {
   garden: { name: "Garden", col: "1 / 2", row: "1 / 2", accent: "#22c55e" },
@@ -23,8 +29,7 @@ export const ROOMS = {
   entrance: { name: "Entrance", col: "1 / 2", row: "3 / 4", accent: "#f97316" },
   utility: { name: "Utility", col: "2 / 4", row: "3 / 4", accent: "#94a3b8" },
 
-  // --- H003 (Indian-context home) rooms: a clean, non-overlapping 3x3 with
-  // the shared son_room (2/1), porch (1/2) and entrance (1/3) cells. ---
+  // --- H003 (Indian-context home) rooms ---
   grandpa_room: { name: "Grandpa's Room", col: "1 / 2", row: "1 / 2", accent: "#f472b6" },
   pooja_room: { name: "Pooja Room", col: "3 / 4", row: "1 / 2", accent: "#fbbf24" },
   kitchen: { name: "Kitchen", col: "2 / 3", row: "2 / 3", accent: "#fb7185" },
@@ -60,22 +65,86 @@ export const DEVICE_KIND = {
   medicine: { icon: "💊", onAction: "TAKEN", offAction: "PENDING", onColor: "#f472b6" },
 };
 
-// Households: each device has id, label, type, room.
+// ── Architectural floor plans ───────────────────────────────────────────────
+// Coordinates are percentages of the plan canvas (x → right, y → down).
+// `wall` is the outer load-bearing wall of the built-up area. Spaces outside it
+// (porch / terrace / garden) are `outdoor` and drawn with dashed boundaries.
+// Spaces whose key is not in any household's device list (Hall, Bath, Dining)
+// are ordinary rooms without smart devices — they exist so the plan reads like
+// a real home. `doors` are openings on a wall: side + position along that side.
+export const FLOOR_PLANS = {
+  // Shared plan for H001 / H002 / H004: a compact single-floor home with a
+  // side garden, front porch and a central living area.
+  generic: {
+    wall: { x: 18, y: 14, w: 82, h: 70 },
+    spaces: [
+      { key: "garden", x: 0, y: 14, w: 18, h: 70, outdoor: true },
+      { key: "son_room", x: 18, y: 14, w: 28, h: 30, doors: [{ side: "bottom", at: 60 }] },
+      { key: "bath", name: "Bath", x: 18, y: 44, w: 28, h: 16, doors: [{ side: "right", at: 50 }] },
+      {
+        key: "entrance",
+        x: 18, y: 60, w: 28, h: 24,
+        doors: [{ side: "bottom", at: 50 }, { side: "right", at: 40 }],
+      },
+      { key: "utility", x: 46, y: 14, w: 28, h: 30, doors: [{ side: "bottom", at: 50 }] },
+      { key: "bedroom", x: 74, y: 14, w: 26, h: 30, doors: [{ side: "bottom", at: 40 }] },
+      { key: "living_room", x: 46, y: 44, w: 54, h: 40 },
+      { key: "porch", x: 20, y: 84, w: 24, h: 16, outdoor: true },
+    ],
+  },
+
+  // H003 · Indian-context care home. Front (porch + entrance) faces the bottom;
+  // the pooja room and kitchen sit at the back, the terrace opens off the
+  // kitchen, and the grandparents' rooms line the quieter left wing.
+  H003: {
+    wall: { x: 0, y: 15, w: 100, h: 69 },
+    spaces: [
+      { key: "terrace", x: 64, y: 0, w: 36, h: 15, outdoor: true },
+      { key: "grandpa_room", x: 0, y: 15, w: 28, h: 29, doors: [{ side: "right", at: 60 }] },
+      { key: "grandma_room", x: 0, y: 44, w: 28, h: 24, doors: [{ side: "right", at: 50 }] },
+      { key: "bath", name: "Bath", x: 0, y: 68, w: 28, h: 16, doors: [{ side: "right", at: 40 }] },
+      { key: "pooja_room", x: 28, y: 15, w: 22, h: 29, doors: [{ side: "bottom", at: 50 }] },
+      { key: "store_room", x: 50, y: 15, w: 14, h: 29, doors: [{ side: "bottom", at: 50 }] },
+      {
+        key: "kitchen",
+        x: 64, y: 15, w: 36, h: 29,
+        doors: [{ side: "left", at: 60 }, { side: "top", at: 80 }],
+      },
+      { key: "hall", name: "Hall", x: 28, y: 44, w: 36, h: 24 },
+      { key: "son_room", x: 64, y: 44, w: 36, h: 24, doors: [{ side: "left", at: 50 }] },
+      { key: "dining", name: "Dining", x: 64, y: 68, w: 36, h: 16, doors: [{ side: "left", at: 50 }] },
+      {
+        key: "entrance",
+        x: 28, y: 68, w: 36, h: 16,
+        doors: [{ side: "top", at: 50 }, { side: "bottom", at: 50 }],
+      },
+      { key: "porch", x: 30, y: 84, w: 32, h: 16, outdoor: true },
+    ],
+  },
+};
+
+export function floorPlanFor(householdId) {
+  return FLOOR_PLANS[householdId] || FLOOR_PLANS.generic;
+}
+
+// Households: each device has id, label, type, room, and `pos` — where the
+// appliance physically sits inside its room (% of the room's rectangle).
 export const HOUSEHOLDS = {
   H001: {
     label: "H001 · Son Departure Home",
     people: ["father", "mother", "son"],
     devices: [
-      { id: "son_room_fan", label: "Fan", type: "fan", room: "son_room" },
-      { id: "son_room_light", label: "Light", type: "light", room: "son_room" },
-      { id: "living_room_ac", label: "AC", type: "ac", room: "living_room" },
-      { id: "living_room_tv", label: "TV", type: "tv", room: "living_room" },
-      { id: "porch_light", label: "Porch Light", type: "light", room: "porch" },
+      { id: "son_room_fan", label: "Fan", type: "fan", room: "son_room", pos: { x: 40, y: 45 } },
+      { id: "son_room_light", label: "Light", type: "light", room: "son_room", pos: { x: 76, y: 66 } },
+      { id: "living_room_ac", label: "AC", type: "ac", room: "living_room", pos: { x: 87, y: 28 } },
+      { id: "living_room_tv", label: "TV", type: "tv", room: "living_room", pos: { x: 45, y: 72 } },
+      { id: "porch_light", label: "Porch Light", type: "light", room: "porch", pos: { x: 50, y: 42 } },
       {
         id: "water_motor",
         label: "Water Motor",
         type: "motor",
         room: "utility",
+        pos: { x: 50, y: 52 },
       },
     ],
   },
@@ -83,72 +152,111 @@ export const HOUSEHOLDS = {
     label: "H002 · AC / Motor / Light Home",
     people: ["father", "mother"],
     devices: [
-      { id: "bedroom_ac", label: "Bedroom AC", type: "ac", room: "bedroom" },
+      { id: "bedroom_ac", label: "Bedroom AC", type: "ac", room: "bedroom", pos: { x: 68, y: 40 } },
       {
         id: "living_room_light",
         label: "Light",
         type: "light",
         room: "living_room",
+        pos: { x: 26, y: 32 },
       },
-      { id: "living_room_ac", label: "AC", type: "ac", room: "living_room" },
+      { id: "living_room_ac", label: "AC", type: "ac", room: "living_room", pos: { x: 87, y: 28 } },
       {
         id: "garden_light",
         label: "Garden Light",
         type: "light",
         room: "garden",
+        pos: { x: 50, y: 22 },
       },
-      { id: "porch_light", label: "Porch Light", type: "light", room: "porch" },
+      { id: "porch_light", label: "Porch Light", type: "light", room: "porch", pos: { x: 50, y: 42 } },
       {
         id: "borewell_motor",
         label: "Borewell Motor",
         type: "motor",
         room: "utility",
+        pos: { x: 50, y: 52 },
       },
-      { id: "front_door", label: "Front Door", type: "door", room: "entrance" },
+      { id: "front_door", label: "Front Door", type: "door", room: "entrance", pos: { x: 50, y: 76 } },
     ],
   },
   H004: {
     label: "H004 · Context-Aware Home ✨",
     people: ["father", "mother"],
     devices: [
-      { id: "living_room_ac", label: "Living AC", type: "ac", room: "living_room" },
-      { id: "bedroom_ac", label: "Bedroom AC", type: "ac", room: "bedroom" },
-      { id: "porch_light", label: "Porch Light", type: "light", room: "porch" },
-      { id: "water_motor", label: "Water Motor", type: "motor", room: "utility" },
-      { id: "mother_presence", label: "Mother", type: "presence", room: "entrance" },
+      { id: "living_room_ac", label: "Living AC", type: "ac", room: "living_room", pos: { x: 87, y: 28 } },
+      { id: "bedroom_ac", label: "Bedroom AC", type: "ac", room: "bedroom", pos: { x: 68, y: 40 } },
+      { id: "porch_light", label: "Porch Light", type: "light", room: "porch", pos: { x: 50, y: 42 } },
+      { id: "water_motor", label: "Water Motor", type: "motor", room: "utility", pos: { x: 50, y: 52 } },
+      { id: "mother_presence", label: "Mother", type: "presence", room: "entrance", pos: { x: 50, y: 42 } },
     ],
   },
   H003: {
     label: "H003 · Indian-Context Care Home",
     people: ["grandpa", "grandma", "father", "mother", "son", "ananya", "maid"],
     devices: [
-      // Elderly care
-      { id: "grandpa_activity", label: "Grandpa Activity", type: "activity", room: "grandpa_room" },
-      { id: "grandma_medicine", label: "Grandma Medicine", type: "medicine", room: "grandma_room" },
-      // Morning pooja
-      { id: "pooja_lamp", label: "Pooja Lamp", type: "light", room: "pooja_room" },
-      { id: "temple_bell", label: "Temple Bell", type: "bell", room: "pooja_room" },
-      { id: "bhajan_speaker", label: "Bhajan Speaker", type: "speaker", room: "pooja_room" },
-      // Son departure (ordinary appliances)
-      { id: "son_room_fan", label: "Fan", type: "fan", room: "son_room" },
-      { id: "son_room_light", label: "Light", type: "light", room: "son_room" },
-      // Entrance: door + people/security/delivery sensors
-      { id: "main_door", label: "Main Door", type: "door", room: "entrance" },
-      { id: "maid_presence", label: "Helper", type: "presence", room: "entrance" },
-      { id: "ananya_presence", label: "Ananya", type: "presence", room: "entrance" },
-      { id: "milk_delivery", label: "Milk Delivery", type: "presence", room: "entrance" },
-      // Kitchen: chai + dinner + chore
-      { id: "chai_kettle", label: "Chai Kettle", type: "kettle", room: "kitchen" },
-      { id: "kitchen_light", label: "Kitchen Light", type: "light", room: "kitchen" },
-      { id: "kitchen_gas_stove", label: "Gas Stove", type: "stove", room: "kitchen" },
-      { id: "water_can_refill", label: "Water Can", type: "can", room: "kitchen" },
-      // Terrace
-      { id: "terrace_clothesline", label: "Clothesline", type: "clothesline", room: "terrace" },
-      // Porch security light
-      { id: "porch_light", label: "Porch Light", type: "light", room: "porch" },
-      // Utility: overhead-tank motor + inverter
-      { id: "water_motor", label: "Water Motor", type: "motor", room: "store_room" },
-      { id: "inverter", label: "Inverter", type: "motor_inverter", room: "store_room" },
+      // Elderly care — the grandparents' rooms in the left wing.
+      {
+        id: "grandpa_activity",
+        label: "Grandpa Activity",
+        type: "activity",
+        room: "grandpa_room",
+        pos: { x: 50, y: 52 },
+      },
+      {
+        id: "grandma_medicine",
+        label: "Grandma Medicine",
+        type: "medicine",
+        room: "grandma_room",
+        pos: { x: 50, y: 54 },
+      },
+      // Morning pooja — mandir room at the back of the hall.
+      { id: "pooja_lamp", label: "Pooja Lamp", type: "light", room: "pooja_room", pos: { x: 26, y: 36 } },
+      { id: "temple_bell", label: "Temple Bell", type: "bell", room: "pooja_room", pos: { x: 74, y: 36 } },
+      {
+        id: "bhajan_speaker",
+        label: "Bhajan Speaker",
+        type: "speaker",
+        room: "pooja_room",
+        pos: { x: 50, y: 78 },
+      },
+      // Son departure (ordinary appliances) — ceiling fan mid-room, lamp by the bed.
+      { id: "son_room_fan", label: "Fan", type: "fan", room: "son_room", pos: { x: 32, y: 46 } },
+      { id: "son_room_light", label: "Light", type: "light", room: "son_room", pos: { x: 72, y: 54 } },
+      // Entrance: front-of-house row — main door + people/security/delivery sensors.
+      { id: "main_door", label: "Main Door", type: "door", room: "entrance", pos: { x: 14, y: 64 } },
+      { id: "maid_presence", label: "Helper", type: "presence", room: "entrance", pos: { x: 38, y: 64 } },
+      { id: "ananya_presence", label: "Ananya", type: "presence", room: "entrance", pos: { x: 62, y: 64 } },
+      {
+        id: "milk_delivery",
+        label: "Milk Delivery",
+        type: "presence",
+        room: "entrance",
+        pos: { x: 86, y: 64 },
+      },
+      // Kitchen: stove + kettle on the back counter, light + water can down front.
+      { id: "chai_kettle", label: "Chai Kettle", type: "kettle", room: "kitchen", pos: { x: 62, y: 32 } },
+      { id: "kitchen_light", label: "Kitchen Light", type: "light", room: "kitchen", pos: { x: 84, y: 68 } },
+      { id: "kitchen_gas_stove", label: "Gas Stove", type: "stove", room: "kitchen", pos: { x: 30, y: 32 } },
+      { id: "water_can_refill", label: "Water Can", type: "can", room: "kitchen", pos: { x: 30, y: 82 } },
+      // Terrace — clothesline in the open air off the kitchen.
+      {
+        id: "terrace_clothesline",
+        label: "Clothesline",
+        type: "clothesline",
+        room: "terrace",
+        pos: { x: 50, y: 50 },
+      },
+      // Porch security light over the front steps.
+      { id: "porch_light", label: "Porch Light", type: "light", room: "porch", pos: { x: 50, y: 46 } },
+      // Utility/store: overhead-tank motor above, inverter below (stacked to fit).
+      { id: "water_motor", label: "Water Motor", type: "motor", room: "store_room", pos: { x: 50, y: 32 } },
+      {
+        id: "inverter",
+        label: "Inverter",
+        type: "motor_inverter",
+        room: "store_room",
+        pos: { x: 50, y: 74 },
+      },
     ],
   },
 };

@@ -71,6 +71,50 @@ class SafetyStatus(str, Enum):
     EMERGENCY = "emergency"
 
 
+class SafetyLayer(BaseModel):
+    """One tier of the defense-in-depth safety model.
+
+    The engine watches three INDEPENDENT layers, each catching a different class
+    of emergency the others would miss:
+
+      1. Wellbeing (behavioral) — silent collapse: the person stopped using the
+         home the way they normally do (no hardware needed).
+      2. Hazard (environmental) — a dangerous *state* that could cause an
+         emergency (gas on, door/window unsafe, appliance overrunning).
+      3. Vitals (direct signal) — acute medical ground truth from a wearable
+         (abnormal heart rate, SOS/fall).
+    """
+
+    layer: int                       # 1 | 2 | 3
+    key: str                         # "wellbeing" | "hazard" | "vitals"
+    name: str
+    icon: str
+    tagline: str
+    active: bool = False             # any concern in this layer right now
+    severity: str = "clear"          # clear | low | medium | high | critical
+    concern_count: int = 0
+    concern_types: list[str] = Field(default_factory=list)
+    detail: str | None = None        # the worst concern's human line
+
+
+class LayeredAssessment(BaseModel):
+    """The three-layer view + cross-layer corroboration.
+
+    Corroboration is the crux: a single weak signal shouldn't cry wolf, but weak
+    signals from INDEPENDENT layers that agree are almost certainly real — so we
+    raise confidence (and urgency) when more than one layer lights up.
+    """
+
+    layers: list[SafetyLayer] = Field(default_factory=list)
+    active_layers: int = 0
+    corroboration: float = 0.0       # 0..1 — how strongly the layers agree
+    corroborated: bool = False       # >= 2 independent layers active
+    # A corroborated wellbeing + hazard combo (e.g. no movement + gas on) is an
+    # emergency even though neither alone would be — the multi-layer payoff.
+    corroborated_emergency: bool = False
+    headline: str = "All three safety layers are clear."
+
+
 class SafetyAssessment(BaseModel):
     """Deterministic safety roll-up attached to every context object.
 
@@ -90,4 +134,6 @@ class SafetyAssessment(BaseModel):
     most_vulnerable_kind: str | None = None
     vulnerability_factor: float = 1.0
     rationale: str = ""
+    # Defense-in-depth: the three-layer view + corroboration across them.
+    layers: LayeredAssessment | None = None
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
