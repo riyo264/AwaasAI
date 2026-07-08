@@ -1,22 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getBcp47 } from "../../lib/lang.js";
-
-// Pick the best available voice for the current narration language, preferring an
-// exact locale match (e.g. hi-IN), then the base language, then a pleasant
-// default. Voices load asynchronously in some browsers.
-function pickVoice(bcp47 = "en-IN") {
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  if (!voices.length) return null;
-  const target = bcp47.toLowerCase();
-  const base = target.split("-")[0];
-  const exact = voices.filter((v) => (v.lang || "").toLowerCase() === target);
-  const byBase = voices.filter((v) => (v.lang || "").toLowerCase().startsWith(base));
-  const pool = exact.length ? exact : byBase.length ? byBase : voices;
-  const preferred = pool.find((v) =>
-    /samantha|female|zira|google|aria|jenny|alexa|swara|heera|neerja|kalpana|prabhat/i.test(v.name),
-  );
-  return preferred || pool[0];
-}
+import { makeUtterance } from "../../lib/tts.js";
 
 // ───────────────────────────────────────────────────────────────────────────
 // A single Alexa notification card (presentational). All the voice / TTS
@@ -301,13 +284,7 @@ export default function AlexaNotification({
     if (!next) return;
 
     const synth = window.speechSynthesis;
-    const utter = new SpeechSynthesisUtterance(next.text);
-    utter.rate = 1.02;
-    utter.pitch = 1.0;
-    const bcp47 = getBcp47();
-    utter.lang = bcp47;
-    const voice = pickVoice(bcp47);
-    if (voice) utter.voice = voice;
+    const utter = makeUtterance(next.text);
     utter.onstart = () => setSpeakingId(next.id);
     const finish = () => {
       spokenIds.current.add(next.id);
@@ -346,12 +323,7 @@ export default function AlexaNotification({
     if (!ttsSupported || muted) return;
     const synth = window.speechSynthesis;
     synth.cancel();
-    const utter = new SpeechSynthesisUtterance(n.text);
-    utter.rate = 1.02;
-    const bcp47 = getBcp47();
-    utter.lang = bcp47;
-    const voice = pickVoice(bcp47);
-    if (voice) utter.voice = voice;
+    const utter = makeUtterance(n.text);
     utter.onstart = () => setSpeakingId(n.id);
     const done = () => {
       setSpeakingId(null);

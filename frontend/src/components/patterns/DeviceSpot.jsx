@@ -19,7 +19,7 @@ export default function DeviceSpot({ device, isOn, anomaly, onToggle, busy }) {
     >
       <span
         className={[
-          "relative grid h-14 w-14 place-items-center rounded-full border-2 text-3xl transition-transform group-hover:scale-110",
+          "relative grid h-12 w-12 place-items-center rounded-full border-2 text-2xl transition-transform group-hover:scale-110",
           isAnomaly
             ? "anomaly-pulse border-red-500/80 bg-red-500/15"
             : isOn
@@ -34,17 +34,17 @@ export default function DeviceSpot({ device, isOn, anomaly, onToggle, busy }) {
         {kind.icon}
         <span
           className={[
-            "absolute -right-1 -top-1 h-4 w-4 rounded-full border-2 border-slate-950",
+            "absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-slate-950",
             isAnomaly ? "bg-red-500" : isOn ? "bg-sky-400" : "bg-slate-600",
           ].join(" ")}
         />
       </span>
-      <span className="pointer-events-none mt-1.5 max-w-32 truncate rounded-md bg-slate-950/75 px-1.5 py-0.5 text-sm font-semibold leading-tight text-slate-100">
+      <span className="pointer-events-none mt-1 max-w-28 truncate rounded-md bg-slate-950/75 px-1.5 py-0.5 text-[13px] font-semibold leading-tight text-slate-100">
         {device.label}
       </span>
       <span
         className={[
-          "mt-0.5 text-xs font-bold uppercase tracking-wide",
+          "mt-0.5 text-[11px] font-bold uppercase tracking-wide",
           isAnomaly ? "text-red-300" : isOn ? "text-sky-300" : "text-slate-400",
         ].join(" ")}
       >

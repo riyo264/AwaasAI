@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { safetyApi } from "../safetyApi.js";
+import { speak } from "../lib/tts.js";
 
 // ════════════════════════════════════════════════════════════════════════════
 //  THE GUARDIAN — a GUIDED, INTERACTIVE walkthrough of defence-in-depth safety.
@@ -146,14 +147,6 @@ function buildRequest(step, { missed, hazard, person, clock }) {
     req.signals.push({ device_id: wearable, device_type: "wearable", room: "living_room", action: "SOS", triggered_by: p.id, minutes_ago: 1 });
   }
   return req;
-}
-
-function speak(text) {
-  try {
-    if (!text || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  } catch { /* best-effort */ }
 }
 
 export default function Safety() {

@@ -56,6 +56,21 @@ def _mins(hhmm: str) -> int:
 # `start`/`end` are inclusive-start, exclusive-end minutes of the day.
 PATTERN_ROUTINES = [
     {
+        "id": "morning_bath",
+        "label": "Morning Geyser",
+        "start": _mins("05:45"),
+        "end": _mins("06:45"),
+        "rooms": {
+            "bath": {
+                "devices_on": ["bath_geyser", "bath_light"],
+                "ambient": {"light_color": "#fde047", "brightness": 75,
+                            "music": None, "notification_mode": "normal"},
+                "reason": "Morning geyser heats water for baths, then switches "
+                          "itself off (learned daily, ~20 min).",
+            },
+        },
+    },
+    {
         "id": "morning_pooja",
         "label": "Morning Pooja",
         "start": _mins("05:30"),
@@ -97,6 +112,36 @@ PATTERN_ROUTINES = [
                             "music": None, "notification_mode": "normal"},
                 "reason": "Son leaves for work — fan & light auto-off "
                           "(learned weekdays, saves power).",
+            },
+        },
+    },
+    {
+        "id": "evening_hall",
+        "label": "Evening TV",
+        "start": _mins("18:00"),
+        "end": _mins("22:15"),
+        "rooms": {
+            "hall": {
+                "devices_on": ["hall_tv", "hall_light"],
+                "ambient": {"light_color": "#fca5a5", "brightness": 55,
+                            "music": None, "notification_mode": "normal"},
+                "reason": "Evening in the hall — the family light and TV come on "
+                          "(learned weekday evenings).",
+            },
+        },
+    },
+    {
+        "id": "dinner",
+        "label": "Dinner",
+        "start": _mins("19:30"),
+        "end": _mins("22:00"),
+        "rooms": {
+            "dining": {
+                "devices_on": ["dining_light"],
+                "ambient": {"light_color": "#fde047", "brightness": 80,
+                            "music": None, "notification_mode": "normal"},
+                "reason": "Dinner time — the dining light is on (learned nightly, "
+                          "switched off by bedtime).",
             },
         },
     },

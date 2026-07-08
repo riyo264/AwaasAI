@@ -1,9 +1,9 @@
-"""Tests for the Indian-context event kinds and care/security detectors (H003).
+"""Tests for the Indian-context event kinds and care detectors (H003).
 
-Covers the new event streams (elderly activity, child return, medicine,
-domestic-helper schedule) end to end: deterministic pattern extraction +
-the new anomaly detectors (inactivity, missed arrival, missed medicine,
-unexpected off-schedule entry) and the resulting context classification.
+Covers the appliance/care event streams (elderly activity, medicine, morning
+geyser, evening dining/TV lights) end to end: deterministic pattern extraction +
+the anomaly detectors (inactivity, missed medicine, duration exceeded, device
+left on) and the resulting context classification.
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def _clean_history():
     return _materialise(
         generate(
             days=30,
-            include_unexpected_entry=False,
+            include_geyser_anomaly=False,
             include_motor_anomaly=False,
             include_left_on=False,
         )
@@ -93,17 +93,29 @@ def test_extracts_activity_time_pattern_for_grandpa():
     assert grandpa[0].confidence >= 0.6
 
 
-def test_extracts_arrival_patterns_for_child_and_helper():
+def test_extracts_geyser_duration_pattern():
+    patterns = _patterns()
+    geyser = [
+        p for p in patterns
+        if isinstance(p, DurationPattern) and p.device == "bath_geyser"
+    ]
+    assert geyser, "expected a duration pattern for the morning geyser"
+    assert 16 <= geyser[0].usual_duration_minutes <= 24
+
+
+def test_extracts_evening_off_time_patterns_for_dining_and_hall():
     patterns = _patterns()
     by_device = {
-        (p.device, p.action): p
+        p.device: p
         for p in patterns
-        if isinstance(p, TimePattern) and p.action == "ARRIVE"
+        if isinstance(p, TimePattern) and p.action == "OFF"
     }
-    assert ("ananya_presence", "ARRIVE") in by_device
-    assert ("maid_presence", "ARRIVE") in by_device
-    _assert_near(by_device[("ananya_presence", "ARRIVE")].usual_time, "18:15")
-    _assert_near(by_device[("maid_presence", "ARRIVE")].usual_time, "09:00")
+    # The dining light and hall lights/TV are switched off around bedtime, giving
+    # clean TimePattern(OFF)s (these power the "left on past bedtime" detector).
+    assert "dining_light" in by_device
+    _assert_near(by_device["dining_light"].usual_time, "21:50")
+    assert "hall_tv" in by_device
+    _assert_near(by_device["hall_tv"].usual_time, "22:05")
 
 
 def test_extracts_medicine_time_pattern():
@@ -152,15 +164,31 @@ def test_inactivity_anomaly_when_grandpa_inactive():
     assert any(a.type == AnomalyType.INACTIVITY for a in ctx.anomalies)
 
 
-def test_missed_arrival_anomaly_when_child_not_home():
+def test_device_left_on_when_dining_light_past_bedtime():
     patterns = _patterns()
-    now = _now(20, 0)
-    state = HouseholdState(household_id=HOUSEHOLD, people_home={"ananya": False})
+    now = _now(23, 30)
+    # Dining light still on well past its learned ~22:00 bedtime OFF, with the
+    # other routines satisfied so only the "left on" flags.
+    state = HouseholdState(household_id=HOUSEHOLD, active_devices=["dining_light"])
     ctx = build_context(
-        state, patterns, _today_satisfied(patterns, now, skip="ananya_presence"), now=now
+        state, patterns, _today_satisfied(patterns, now, skip=None), now=now
     )
-    assert ctx.context_type == ContextType.CARE_ALERT
-    assert any(a.type == AnomalyType.MISSED_ARRIVAL for a in ctx.anomalies)
+    assert any(a.type == AnomalyType.DEVICE_LEFT_ON for a in ctx.anomalies)
+
+
+def test_duration_exceeded_when_geyser_runs_too_long():
+    patterns = _patterns()
+    now = _now(7, 0)
+    geyser_on = (now - timedelta(minutes=70)).isoformat()  # usual ~20 min
+    state = HouseholdState(
+        household_id=HOUSEHOLD,
+        active_devices=["bath_geyser"],
+        device_on_since={"bath_geyser": geyser_on},
+    )
+    ctx = build_context(
+        state, patterns, _today_satisfied(patterns, now, skip=None), now=now
+    )
+    assert any(a.type == AnomalyType.DURATION_EXCEEDED for a in ctx.anomalies)
 
 
 def test_missed_medicine_anomaly():
@@ -174,30 +202,16 @@ def test_missed_medicine_anomaly():
     assert any(a.type == AnomalyType.MISSED_MEDICINE for a in ctx.anomalies)
 
 
-def test_unexpected_activity_when_helper_arrives_off_schedule():
+def test_geyser_within_usual_duration_is_not_flagged():
     patterns = _patterns()
-    now = _now(3, 0)
-    odd_entry = Event(
-        household_id=HOUSEHOLD, device_id="maid_presence",
-        device_type=DeviceType.PRESENCE, room="entrance",
-        action=DeviceAction.ARRIVE, triggered_by="maid",
-        timestamp=now.replace(hour=2, minute=30),
+    now = _now(6, 15)
+    geyser_on = (now - timedelta(minutes=12)).isoformat()  # within usual ~20 min
+    state = HouseholdState(
+        household_id=HOUSEHOLD,
+        active_devices=["bath_geyser"],
+        device_on_since={"bath_geyser": geyser_on},
     )
-    state = HouseholdState(household_id=HOUSEHOLD, people_home={"maid": True})
-    ctx = build_context(state, patterns, [odd_entry], now=now)
-    assert ctx.context_type == ContextType.SECURITY_ALERT
-    assert any(a.type == AnomalyType.UNEXPECTED_ACTIVITY for a in ctx.anomalies)
-
-
-def test_on_schedule_helper_arrival_is_not_flagged():
-    patterns = _patterns()
-    now = _now(9, 5)
-    on_time = Event(
-        household_id=HOUSEHOLD, device_id="maid_presence",
-        device_type=DeviceType.PRESENCE, room="entrance",
-        action=DeviceAction.ARRIVE, triggered_by="maid",
-        timestamp=now.replace(hour=9, minute=5),
+    ctx = build_context(
+        state, patterns, _today_satisfied(patterns, now, skip=None), now=now
     )
-    state = HouseholdState(household_id=HOUSEHOLD, people_home={"maid": True})
-    ctx = build_context(state, patterns, [on_time], now=now)
-    assert not any(a.type == AnomalyType.UNEXPECTED_ACTIVITY for a in ctx.anomalies)
+    assert not any(a.type == AnomalyType.DURATION_EXCEEDED for a in ctx.anomalies)

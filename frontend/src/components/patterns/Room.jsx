@@ -32,7 +32,7 @@ export default function Room({ space, devices, activeSet, anomalyMap, onToggle, 
       {/* Room label */}
       <div className="pointer-events-none absolute left-2 top-1.5 z-6 flex items-center gap-1.5">
         <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full"
+          className="h-2 w-2 shrink-0 rounded-full"
           style={{
             background: accent,
             boxShadow: hasDevices ? `0 0 8px ${accent}` : "none",
@@ -41,7 +41,7 @@ export default function Room({ space, devices, activeSet, anomalyMap, onToggle, 
         />
         <span
           className={[
-            "truncate text-[13px] font-bold uppercase tracking-wider",
+            "truncate text-[11px] font-bold uppercase tracking-wider",
             hasDevices ? "text-slate-300" : "text-slate-500",
           ].join(" ")}
         >

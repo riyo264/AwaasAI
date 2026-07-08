@@ -1,14 +1,15 @@
 """Third synthetic scenario (household H003) — full Indian-context intelligence.
 
-This household exercises EVERY Indian-context feature on the brief, each modelled
+This household exercises the Indian-context features on the brief, each modelled
 as a deterministic, learnable **event stream** the existing extractors already
 understand — NO new algorithm is required. Ordinary appliances (fans, lights,
-doors) are mixed in so the engine learns the whole home together.
+TV, geyser, doors) are mixed in so the engine learns the whole home together.
 
-The point of this file: show, per feature, *what kind of event* models it and
-*how the engine flags it*. Every feature below resolves to one of the three
-existing pattern kinds (TimePattern / SequencePattern / DurationPattern) and one
-of the existing anomaly detectors.
+Everything here is an ACTUATOR/APPLIANCE event (a switch flipping, a smart plug
+toggling, a pill box confirming) — i.e. things a real smart home can log without
+a special sensor. We deliberately avoid "who walked in" presence guesses (a maid
+arriving, a delivery showing up, a child returning) that a home cannot actually
+observe; the appliances below stand in for those routines far more defensibly.
 
 ╔══════════════════════════════════════════════════════════════════════════════
 ║  FEATURE → EVENT MODEL → LEARNED PATTERN → ANOMALY IT ENABLES
@@ -19,16 +20,18 @@ of the existing anomaly detectors.
 ║  2. Elderly parent care
 ║       grandpa_activity · ACTIVITY · ACTIVE ~06:45     → TimePattern(ACTIVE)
 ║       → INACTIVITY when the morning activity ping is absent.
-║  3. Child tuition / school return
-║       ananya_presence · PRESENCE · ARRIVE ~18:15      → TimePattern(ARRIVE)
-║       → MISSED_ARRIVAL when she hasn't returned.
+║  3. Morning geyser / water heater
+║       bath_geyser · plug ON→OFF ~20 min, ~06:00       → DurationPattern
+║       → DURATION_EXCEEDED when left running (power waste / scald risk). Paired
+║       with bath_light as a short "morning bath" SequencePattern.
 ║  4. Morning pooja
 ║       pooja_lamp:ON → temple_bell:ON → bhajan_speaker:ON ~07:00
 ║                                                       → SequencePattern (+ a
 ║       pooja_lamp ON TimePattern) → MISSED_ROUTINE reminder if pooja not begun.
-║  5. Domestic helper / caretaker
-║       maid_presence · PRESENCE · ARRIVE ~09:00, LEAVE ~11:00 → TimePattern
-║       → UNEXPECTED_ACTIVITY when an arrival lands far outside the window.
+║  5. Dining light / dinner
+║       dining_light · LIGHT · OFF ~22:00 (consistent bedtime-off; the ON time
+║       varies with when dinner starts)                 → TimePattern(OFF)
+║       → DEVICE_LEFT_ON when the dining light is still on well past bedtime.
 ║  6. Elderly medicine adherence
 ║       grandma_medicine · MEDICINE · TAKEN ~21:00      → TimePattern(TAKEN)
 ║       → MISSED_MEDICINE when the dose isn't confirmed.
@@ -45,11 +48,12 @@ of the existing anomaly detectors.
 ║ 10. Evening chai routine
 ║       chai_kettle:ON → kitchen_light:ON ~17:00        → SequencePattern (+ a
 ║       chai_kettle ON TimePattern) → MISSED_ROUTINE reminder ("time for chai").
-║ 11. Daily delivery (milk / newspaper) coordination
-║       milk_delivery · PRESENCE · ARRIVE ~06:00        → TimePattern(ARRIVE)
-║       → MISSED_ARRIVAL when the daily delivery doesn't show.
+║ 11. Evening TV / hall
+║       hall_tv · TV · ON ~18:45, OFF ~22:05; hall_light ~18:05→22:20
+║                                                       → Time/DurationPattern
+║       → DEVICE_LEFT_ON / DURATION_EXCEEDED when the TV is left on late.
 ║ 12. Household chore coordination (drinking-water can refill)
-║       water_can_refill · OTHER · ON→OFF (momentary) ~20:30 → TimePattern(ON)
+║       water_can_refill · OTHER · ON→OFF (momentary) ~21:35 → TimePattern(ON)
 ║       → MISSED_ROUTINE when today's chore hasn't been done (assign to whoever
 ║         is home via ``people_home`` at the orchestrator).
 ║
@@ -58,9 +62,9 @@ of the existing anomaly detectors.
 ║       porch security : porch_light ON ~19:20, OFF ~22:30
 ╚══════════════════════════════════════════════════════════════════════════════
 
-Times are spaced > MAX_GAP_MINUTES (10) apart except inside the three INTENDED
-sequences (pooja, chai, son departure) so unrelated evening events never merge
-into a spurious, repeating session signature.
+Times are spaced > MAX_GAP_MINUTES (10) apart except inside the intended
+sequences (morning bath, pooja, chai, son departure) so unrelated events never
+merge into a spurious, repeating session signature.
 """
 from __future__ import annotations
 
@@ -82,7 +86,7 @@ def _at(day: datetime, hour: int, minute: int, jitter: int = 0) -> datetime:
 def generate(
     days: int = 30,
     *,
-    include_unexpected_entry: bool = True,
+    include_geyser_anomaly: bool = True,
     include_motor_anomaly: bool = True,
     include_left_on: bool = True,
 ) -> list[EventCreate]:
@@ -105,9 +109,18 @@ def generate(
     for d in range(days, 0, -1):
         day = today - timedelta(days=d)
 
-        # 11) Daily milk delivery ~06:00 (coordination / "did it arrive?").
-        add("milk_delivery", DeviceType.PRESENCE, "entrance", DeviceAction.ARRIVE,
-            _at(day, 6, 0, jitter=8), triggered_by="milkman")
+        # 3) Morning geyser ~06:00 (~20 min heat-up) + bath light. The geyser ON
+        #    and bath light ON fire within a minute → a short "morning bath"
+        #    SequencePattern; the geyser ON→OFF gives a DurationPattern.
+        b_on = _at(day, 6, 0, jitter=5)
+        add("bath_geyser", DeviceType.OTHER, "bath", DeviceAction.ON, b_on,
+            triggered_by="father")
+        add("bath_light", DeviceType.LIGHT, "bath", DeviceAction.ON,
+            b_on + timedelta(minutes=2), triggered_by="father")
+        add("bath_geyser", DeviceType.OTHER, "bath", DeviceAction.OFF,
+            b_on + timedelta(minutes=20 + _rng.randint(-2, 2)), triggered_by="father")
+        add("bath_light", DeviceType.LIGHT, "bath", DeviceAction.OFF,
+            b_on + timedelta(minutes=22 + _rng.randint(-2, 2)), triggered_by="father")
 
         # 2) Elderly morning activity ~06:45 (grandpa moves around / wakes).
         add("grandpa_activity", DeviceType.ACTIVITY, "grandpa_room",
@@ -146,12 +159,6 @@ def generate(
         add("main_door", DeviceType.DOOR, "entrance", DeviceAction.CLOSE,
             _at(day, 8, 20, jitter=3), triggered_by="son")
 
-        # 5) Domestic helper arrives ~09:00, leaves ~11:00.
-        add("maid_presence", DeviceType.PRESENCE, "entrance", DeviceAction.ARRIVE,
-            _at(day, 9, 0, jitter=10), triggered_by="maid")
-        add("maid_presence", DeviceType.PRESENCE, "entrance", DeviceAction.LEAVE,
-            _at(day, 11, 0, jitter=10), triggered_by="maid")
-
         # 1) Overhead-tank water motor ~15 min run ~09:30.
         m_on = _at(day, 9, 30, jitter=8)
         add("water_motor", DeviceType.MOTOR, "utility", DeviceAction.ON, m_on)
@@ -175,9 +182,15 @@ def generate(
         add("terrace_clothesline", DeviceType.OTHER, "terrace", DeviceAction.OFF,
             _at(day, 17, 30, jitter=6), triggered_by="mother")
 
-        # 3) Child returns from tuition ~18:15.
-        add("ananya_presence", DeviceType.PRESENCE, "entrance", DeviceAction.ARRIVE,
-            _at(day, 18, 15, jitter=8), triggered_by="ananya")
+        # 11) Evening hall — the family light comes on early evening and the TV
+        #     goes on for the evening; both are switched off around bedtime. The
+        #     TV's ON time varies a lot with the evening (wide jitter → no stable
+        #     duration), but it is always switched off ~22:05 → a clean
+        #     TimePattern(OFF) that powers the "TV left on late" DEVICE_LEFT_ON.
+        add("hall_light", DeviceType.LIGHT, "hall", DeviceAction.ON,
+            _at(day, 18, 5, jitter=6), triggered_by="mother")
+        add("hall_tv", DeviceType.TV, "hall", DeviceAction.ON,
+            _at(day, 18, 30, jitter=90), triggered_by="son")
 
         # 9) Gas stove dinner cooking ~18:30, ~30 min → DurationPattern.
         g_on = _at(day, 18, 30, jitter=6)
@@ -186,9 +199,16 @@ def generate(
         add("kitchen_gas_stove", DeviceType.OTHER, "kitchen", DeviceAction.OFF,
             g_on + timedelta(minutes=30 + _rng.randint(-4, 4)), triggered_by="mother")
 
-        # (ordinary) Evening security / porch light ON ~19:20, OFF ~22:30.
+        # (ordinary) Evening security / porch light ON ~19:20.
         add("porch_light", DeviceType.LIGHT, "porch", DeviceAction.ON,
             _at(day, 19, 20, jitter=5))
+
+        # 5) Dining light for dinner. The ON time varies a lot with when dinner
+        #    starts (wide jitter → no stable duration), but it is always switched
+        #    off around bedtime → a clean TimePattern(OFF) ~22:00 that powers the
+        #    "dining light left on past bedtime" DEVICE_LEFT_ON.
+        add("dining_light", DeviceType.LIGHT, "dining", DeviceAction.ON,
+            _at(day, 20, 0, jitter=45), triggered_by="mother")
 
         # 7) Power-cut / inverter: evening outage ~20:00, runs ~45 min →
         #    DurationPattern. Running far longer ⇒ battery draining.
@@ -197,31 +217,41 @@ def generate(
         add("inverter", DeviceType.OTHER, "utility", DeviceAction.OFF,
             i_on + timedelta(minutes=45 + _rng.randint(-5, 5)))
 
-        # 12) Household chore — refill the 20 L drinking-water can ~20:30
-        #     (momentary ON→OFF so it never lingers as an active device).
-        w_on = _at(day, 20, 30, jitter=6)
-        add("water_can_refill", DeviceType.OTHER, "kitchen", DeviceAction.ON, w_on,
-            triggered_by="maid")
-        add("water_can_refill", DeviceType.OTHER, "kitchen", DeviceAction.OFF,
-            w_on + timedelta(minutes=1), triggered_by="maid")
-
         # 6) Elderly evening medicine ~21:00.
         add("grandma_medicine", DeviceType.MEDICINE, "grandma_room",
             DeviceAction.TAKEN, _at(day, 21, 0, jitter=8), triggered_by="grandma")
 
-        # (ordinary) Porch light off / kitchen light off late evening ~22:30.
+        # 12) Household chore — refill the 20 L drinking-water can ~21:35
+        #     (momentary ON→OFF so it never lingers as an active device).
+        w_on = _at(day, 21, 35, jitter=6)
+        add("water_can_refill", DeviceType.OTHER, "kitchen", DeviceAction.ON, w_on,
+            triggered_by="mother")
+        add("water_can_refill", DeviceType.OTHER, "kitchen", DeviceAction.OFF,
+            w_on + timedelta(minutes=1), triggered_by="mother")
+
+        # (ordinary + 5/11) Bedtime shutdown — the evening lights and the TV are
+        # switched off around bedtime (~21:50–22:40, spaced so they read as
+        # individual TimePattern(OFF)s, not one merged session).
+        add("dining_light", DeviceType.LIGHT, "dining", DeviceAction.OFF,
+            _at(day, 21, 50, jitter=6), triggered_by="mother")
+        add("hall_tv", DeviceType.TV, "hall", DeviceAction.OFF,
+            _at(day, 22, 5, jitter=6), triggered_by="son")
+        add("hall_light", DeviceType.LIGHT, "hall", DeviceAction.OFF,
+            _at(day, 22, 20, jitter=6), triggered_by="mother")
         add("porch_light", DeviceType.LIGHT, "porch", DeviceAction.OFF,
-            _at(day, 22, 30, jitter=8))
+            _at(day, 22, 35, jitter=6))
         add("kitchen_light", DeviceType.LIGHT, "kitchen", DeviceAction.OFF,
-            _at(day, 22, 35, jitter=8), triggered_by="mother")
+            _at(day, 22, 40, jitter=6), triggered_by="mother")
 
     # ───────────── TODAY: inject concrete current-state anomalies ─────────────
     # (These power the LIVE /context/H003 endpoint. The demo script instead
     #  builds explicit per-feature states so every detector can be shown.)
-    if include_unexpected_entry:
-        # Helper "arrives" at 02:30 — far outside the usual ~09:00 window.
-        add("maid_presence", DeviceType.PRESENCE, "entrance", DeviceAction.ARRIVE,
-            today.replace(hour=2, minute=30, tzinfo=timezone.utc), triggered_by="maid")
+    if include_geyser_anomaly:
+        # Geyser switched ON 40 min ago and never stopped (usual ~20 min) →
+        # likely forgotten / water heater wasting power (and a scald risk).
+        forty_ago = datetime.now(timezone.utc) - timedelta(minutes=40)
+        add("bath_geyser", DeviceType.OTHER, "bath", DeviceAction.ON, forty_ago,
+            triggered_by="father")
 
     if include_motor_anomaly:
         # Water motor switched ON 40 min ago and never stopped (usual ~15 min) →

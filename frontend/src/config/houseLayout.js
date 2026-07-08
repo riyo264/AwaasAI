@@ -36,6 +36,10 @@ export const ROOMS = {
   terrace: { name: "Terrace", col: "3 / 4", row: "2 / 3", accent: "#34d399" },
   store_room: { name: "Utility", col: "2 / 3", row: "3 / 4", accent: "#94a3b8" },
   grandma_room: { name: "Grandma's Room", col: "3 / 4", row: "3 / 4", accent: "#c084fc" },
+  // H003 rooms that gained smart appliances (4th Devices-page grid row).
+  bath: { name: "Bathroom", col: "1 / 2", row: "4 / 5", accent: "#22d3ee" },
+  hall: { name: "Hall", col: "2 / 3", row: "4 / 5", accent: "#38bdf8" },
+  dining: { name: "Dining", col: "3 / 4", row: "4 / 5", accent: "#f59e0b" },
 };
 
 // Per device-type rendering + on/off action semantics.
@@ -53,6 +57,7 @@ export const DEVICE_KIND = {
   },
   // --- Indian-context device kinds (H003) ---
   motor_inverter: { icon: "🔋", onAction: "ON", offAction: "OFF", onColor: "#4ade80" },
+  geyser: { icon: "♨️", onAction: "ON", offAction: "OFF", onColor: "#fb7185" },
   stove: { icon: "🔥", onAction: "ON", offAction: "OFF", onColor: "#fb923c" },
   kettle: { icon: "🫖", onAction: "ON", offAction: "OFF", onColor: "#f59e0b" },
   bell: { icon: "🔔", onAction: "ON", offAction: "OFF", onColor: "#facc15" },
@@ -192,7 +197,7 @@ export const HOUSEHOLDS = {
   },
   H003: {
     label: "H003 · Indian-Context Care Home",
-    people: ["grandpa", "grandma", "father", "mother", "son", "ananya", "maid"],
+    people: ["grandpa", "grandma", "father", "mother", "son"],
     devices: [
       // Elderly care — the grandparents' rooms in the left wing.
       {
@@ -222,22 +227,21 @@ export const HOUSEHOLDS = {
       // Son departure (ordinary appliances) — ceiling fan mid-room, lamp by the bed.
       { id: "son_room_fan", label: "Fan", type: "fan", room: "son_room", pos: { x: 32, y: 46 } },
       { id: "son_room_light", label: "Light", type: "light", room: "son_room", pos: { x: 72, y: 54 } },
-      // Entrance: front-of-house row — main door + people/security/delivery sensors.
-      { id: "main_door", label: "Main Door", type: "door", room: "entrance", pos: { x: 14, y: 64 } },
-      { id: "maid_presence", label: "Helper", type: "presence", room: "entrance", pos: { x: 38, y: 64 } },
-      { id: "ananya_presence", label: "Ananya", type: "presence", room: "entrance", pos: { x: 62, y: 64 } },
-      {
-        id: "milk_delivery",
-        label: "Milk Delivery",
-        type: "presence",
-        room: "entrance",
-        pos: { x: 86, y: 64 },
-      },
+      // Entrance: the smart main-door lock (a real, loggable device).
+      { id: "main_door", label: "Main Door", type: "door", room: "entrance", pos: { x: 50, y: 56 } },
+      // Bathroom: morning geyser (water heater) + light.
+      { id: "bath_geyser", label: "Geyser", type: "geyser", room: "bath", pos: { x: 34, y: 58 } },
+      { id: "bath_light", label: "Bath Light", type: "light", room: "bath", pos: { x: 70, y: 58 } },
       // Kitchen: stove + kettle on the back counter, light + water can down front.
       { id: "chai_kettle", label: "Chai Kettle", type: "kettle", room: "kitchen", pos: { x: 62, y: 32 } },
       { id: "kitchen_light", label: "Kitchen Light", type: "light", room: "kitchen", pos: { x: 84, y: 68 } },
       { id: "kitchen_gas_stove", label: "Gas Stove", type: "stove", room: "kitchen", pos: { x: 30, y: 32 } },
       { id: "water_can_refill", label: "Water Can", type: "can", room: "kitchen", pos: { x: 30, y: 82 } },
+      // Hall: the family TV + light — the main evening living space.
+      { id: "hall_tv", label: "TV", type: "tv", room: "hall", pos: { x: 36, y: 48 } },
+      { id: "hall_light", label: "Hall Light", type: "light", room: "hall", pos: { x: 68, y: 48 } },
+      // Dining: the dinner-table light.
+      { id: "dining_light", label: "Dining Light", type: "light", room: "dining", pos: { x: 50, y: 58 } },
       // Terrace — clothesline in the open air off the kitchen.
       {
         id: "terrace_clothesline",

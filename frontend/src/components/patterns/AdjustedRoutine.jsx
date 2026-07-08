@@ -34,7 +34,7 @@ function hourOf(t) {
   return Number.isNaN(h) ? null : h;
 }
 
-function deviceIcon(id = "", label = "") {
+export function deviceIcon(id = "", label = "") {
   const d = `${id} ${label}`.toLowerCase();
   if (/(pooja|lamp|diya)/.test(d)) return "🪔";
   if (/(bhajan|speaker|music|radio)/.test(d)) return "🔊";
@@ -153,7 +153,17 @@ export default function AdjustedRoutine({ householdId, refreshKey, onOverlayChan
       )}
 
       <div className="p-3">
-        {busy && !sched && <p className="px-1 py-4 text-[11px] text-slate-500">Loading routine…</p>}
+        {busy && !sched && (
+          <div className="flex flex-col gap-2 p-2">
+            {[82, 64, 90, 58, 74, 68].map((w, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="pp-skeleton h-3 w-12 shrink-0 rounded" />
+                <span className="pp-skeleton h-7 w-7 shrink-0 rounded-lg" />
+                <span className="pp-skeleton h-3 rounded" style={{ width: `${w}%` }} />
+              </div>
+            ))}
+          </div>
+        )}
         {sched && groups.length === 0 && (
           <p className="rounded-lg bg-slate-800/40 px-3 py-4 text-center text-[11px] text-slate-500">
             {adapted ? "No changed lines." : "No timed routines learned yet — hit Load Demo Data first."}
@@ -176,28 +186,28 @@ export default function AdjustedRoutine({ householdId, refreshKey, onOverlayChan
                   const st = STATUS[e.status] || STATUS.normal;
                   const changed = e.status !== "normal";
                   return (
-                    <li key={`${e.pattern_id || e.label}-${i}`} className="relative">
+                    <li key={`${e.pattern_id || e.label}-${i}`} className={changed ? "pp-rise relative" : "relative"}>
                       {/* rail dot */}
-                      <span className={["absolute -left-[17px] top-2 h-2 w-2 rounded-full ring-2 ring-slate-900", st.dot].join(" ")} />
-                      <div className={["flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition", changed ? st.ring : "border-transparent hover:bg-slate-800/30"].join(" ")}>
+                      <span className={["absolute -left-[17px] top-2.5 h-2 w-2 rounded-full ring-2 ring-slate-900", st.dot].join(" ")} />
+                      <div className={["flex items-center gap-2 rounded-lg border px-2.5 py-2 transition", changed ? st.ring : "border-transparent hover:bg-slate-800/30"].join(" ")}>
                         {/* time */}
-                        <span className="w-[68px] shrink-0 font-mono text-[11px] tabular-nums">
+                        <span className="w-[76px] shrink-0 font-mono text-xs tabular-nums">
                           {e.status === "shifted" && e.old_time ? (
-                            <><span className="text-slate-600 line-through">{e.old_time}</span> <span className="text-sky-300">{e.time}</span></>
+                            <><span className="text-slate-600 line-through">{e.old_time}</span> <span className="font-semibold text-sky-300">{e.time}</span></>
                           ) : (
                             <span className="text-slate-400">{e.time || "—"}</span>
                           )}
                         </span>
-                        <span className="text-sm">{deviceIcon(e.device, e.label)}</span>
-                        <span className={["flex-1 truncate text-xs", st.text].join(" ")}>{e.label}</span>
+                        <span className="text-base">{deviceIcon(e.device, e.label)}</span>
+                        <span className={["flex-1 truncate text-[13px]", st.text].join(" ")}>{e.label}</span>
                         {changed && (
-                          <span className={["shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold", st.chip].join(" ")}>
+                          <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold", st.chip].join(" ")}>
                             {st.badge}
                           </span>
                         )}
                       </div>
                       {changed && e.reason && (
-                        <p className="ml-[76px] mt-0.5 text-[10px] italic text-slate-500">↳ {e.reason}</p>
+                        <p className="ml-[84px] mt-0.5 text-[11px] italic text-slate-500">↳ {e.reason}</p>
                       )}
                     </li>
                   );

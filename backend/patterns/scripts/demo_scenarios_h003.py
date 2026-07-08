@@ -9,15 +9,15 @@ Runs entirely in-memory (moto) — no AWS, no Docker, no DynamoDB needed. It:
 Feature → detector shown:
    1  Water motor / tank         → DURATION_EXCEEDED   (duration_anomaly)
    2  Elderly parent care        → INACTIVITY          (care_alert)
-   3  Child tuition return       → MISSED_ARRIVAL      (care_alert)
+   3  Morning geyser             → DURATION_EXCEEDED   (duration_anomaly)
    4  Morning pooja              → MISSED_ROUTINE      (routine_suggestion)
-   5  Domestic helper / security → UNEXPECTED_ACTIVITY (security_alert)
+   5  Dining light / dinner      → DEVICE_LEFT_ON      (departure_anomaly)
    6  Medicine adherence         → MISSED_MEDICINE     (care_alert)
    7  Power-cut / inverter       → DURATION_EXCEEDED   (duration_anomaly)
    8  Rain / clothesline         → DEVICE_LEFT_ON      (departure_anomaly)
    9  Gas-stove monitoring       → DURATION_EXCEEDED   (duration_anomaly)
   10  Evening chai routine       → MISSED_ROUTINE      (routine_suggestion)
-  11  Daily delivery (milk)      → MISSED_ARRIVAL      (care_alert)
+  11  Evening TV / hall          → DEVICE_LEFT_ON      (departure_anomaly)
   12  Household chore (water can)→ MISSED_ROUTINE      (routine_suggestion)
   +   NORMAL                     → no anomalies        (normal)
 
@@ -73,7 +73,7 @@ def main() -> None:
         event_service.store_events(
             generate(
                 days=30,
-                include_unexpected_entry=False,
+                include_geyser_anomaly=False,
                 include_motor_anomaly=False,
                 include_left_on=False,
             )
@@ -139,12 +139,13 @@ def main() -> None:
                           satisfied(now, skip="grandpa_activity"), now=now),
         )
 
-        # 3) CHILD RETURN — Ananya hasn't returned from tuition.
-        now = base.replace(hour=20, minute=0)
+        # 3) MORNING GEYSER — running ~70 min vs usual ~20 (left on / power waste).
+        now = base.replace(hour=7, minute=10)
+        geyser_on = (now - timedelta(minutes=70)).isoformat()
         _print_context(
-            "3) CHILD RETURN — Ananya hasn't returned from tuition",
-            build_context(state(people={"ananya": False}), patterns,
-                          satisfied(now, skip="ananya_presence"), now=now),
+            "3) MORNING GEYSER — running ~70 min vs usual ~20 (left on)",
+            build_context(state(active=["bath_geyser"], since={"bath_geyser": geyser_on}),
+                          patterns, satisfied(now), now=now),
         )
 
         # 4) MORNING POOJA — pooja routine hasn't started ("time for pooja").
@@ -155,17 +156,14 @@ def main() -> None:
                           satisfied(now, skip="pooja_lamp"), now=now),
         )
 
-        # 5) DOMESTIC HELPER — maid 'arrives' at 02:30, far off-schedule.
-        now = base.replace(hour=3, minute=0)
-        odd_entry = Event(
-            household_id=HOUSEHOLD, device_id="maid_presence",
-            device_type=DeviceType.PRESENCE, room="entrance",
-            action=DeviceAction.ARRIVE, triggered_by="maid",
-            timestamp=now.replace(hour=2, minute=30),
-        )
+        # 5) DINING LIGHT — still on well past the usual ~22:00 bedtime OFF.
+        now = base.replace(hour=23, minute=30)
+        line_since = now.replace(hour=20, minute=0).isoformat()
         _print_context(
-            "5) DOMESTIC HELPER — entry at 02:30, outside the usual schedule",
-            build_context(state(people={"maid": True}), patterns, [odd_entry], now=now),
+            "5) DINING LIGHT — still on well past the usual 22:00 bedtime OFF",
+            build_context(state(active=["dining_light"],
+                                since={"dining_light": line_since}),
+                          patterns, satisfied(now), now=now),
         )
 
         # 6) MEDICINE — grandma's evening dose not confirmed.
@@ -213,16 +211,17 @@ def main() -> None:
                           satisfied(now, skip="chai_kettle"), now=now),
         )
 
-        # 11) DAILY DELIVERY — the morning milk delivery didn't arrive.
-        now = base.replace(hour=8, minute=0)
+        # 11) EVENING TV — the hall TV is still on well past the usual ~22:05 OFF.
+        now = base.replace(hour=23, minute=45)
+        tv_since = now.replace(hour=18, minute=45).isoformat()
         _print_context(
-            "11) DAILY DELIVERY — the morning milk delivery didn't arrive",
-            build_context(state(), patterns,
-                          satisfied(now, skip="milk_delivery"), now=now),
+            "11) EVENING TV — the hall TV is still on well past the usual 22:05 OFF",
+            build_context(state(active=["hall_tv"], since={"hall_tv": tv_since}),
+                          patterns, satisfied(now), now=now),
         )
 
         # 12) HOUSEHOLD CHORE — the drinking-water can wasn't refilled.
-        now = base.replace(hour=22, minute=30)
+        now = base.replace(hour=23, minute=30)
         _print_context(
             "12) HOUSEHOLD CHORE — the drinking-water can refill is still pending",
             build_context(state(people={"father": True, "mother": True}), patterns,

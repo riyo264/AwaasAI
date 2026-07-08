@@ -249,30 +249,6 @@ export default function Patterns() {
       render: () => <HomeProfile householdId={householdId} />,
     },
     {
-      key: "occasion",
-      label: "Occasion Overlay",
-      icon: "🗣️",
-      render: () => (
-        <ContextNotes
-          householdId={householdId}
-          refreshKey={overlayVersion}
-          onOverlayChange={bump}
-        />
-      ),
-    },
-    {
-      key: "adapted",
-      label: "Adapted Routine",
-      icon: "🗓️",
-      render: () => (
-        <AdjustedRoutine
-          householdId={householdId}
-          refreshKey={overlayVersion}
-          onOverlayChange={bump}
-        />
-      ),
-    },
-    {
       key: "conditional",
       label: "Conditional Patterns",
       icon: "🌡️",
@@ -322,6 +298,21 @@ export default function Patterns() {
               busy={busy}
             />
           </div>
+        </section>
+
+        {/* Occasion Overlay studio — tell the home about an occasion and watch
+            the LLM re-plan the learned routine, side by side. */}
+        <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[440px_1fr]">
+          <ContextNotes
+            householdId={householdId}
+            refreshKey={overlayVersion}
+            onOverlayChange={bump}
+          />
+          <AdjustedRoutine
+            householdId={householdId}
+            refreshKey={overlayVersion}
+            onOverlayChange={bump}
+          />
         </section>
 
         {/* Below the fold: what the home concludes from the current scene. */}

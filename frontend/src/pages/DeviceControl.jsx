@@ -335,7 +335,7 @@ export default function DeviceControl() {
             className="grid gap-3"
             style={{
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gridTemplateRows: "repeat(3, minmax(140px, 1fr))",
+              gridTemplateRows: "repeat(4, minmax(140px, 1fr))",
             }}
           >
             {rooms.map((room) => {
