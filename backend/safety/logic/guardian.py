@@ -78,6 +78,12 @@ Your job:
      long total silence). TONE: the GRAVEST urgency — immediate, decisive, no
      hesitation. e.g. "This is an emergency — Ramesh has pressed the SOS after a
      fall. I'm calling the family and emergency services this instant."
+If the input contains "independent_layers_agree", two or more INDEPENDENT safety
+layers (behavioral / environmental / vitals) point the same way. Signals that
+corroborate each other are almost certainly real — treat the situation as more
+serious than any single concern suggests, and say plainly that the signs agree
+(e.g. "no movement from Ramesh AND the gas left burning").
+
 4. Write:
    - "spoken": one or two sentences in the tone above. For auto_alarm, state
      what's wrong AND that you're alerting family. For check_in, a WARM question.
@@ -165,7 +171,7 @@ def _fallback_explanation(person: str, flagged: GuardianConcern, mode: str) -> s
 
 
 async def _triage(concerns: list[GuardianConcern], situation: str, person: str,
-                  now: datetime, language: str = "en") -> dict | None:
+                  now: datetime, language: str = "en", layers=None) -> dict | None:
     from safety.logic import lang
     settings = get_settings()
     payload = {
@@ -177,6 +183,8 @@ async def _triage(concerns: list[GuardianConcern], situation: str, person: str,
             for c in concerns
         ],
     }
+    if layers is not None and layers.corroborated:
+        payload["independent_layers_agree"] = layers.headline
     return await _call_groq(TRIAGE_SYSTEM + lang.directive(language), json.dumps(payload), settings)
 
 
@@ -247,8 +255,9 @@ async def assess(
     # Promote the worst concern into the extreme path so it auto-alarms.
     if not extreme and layers and layers.corroborated_emergency:
         extreme = [concerns_sorted[0]]
+        decision.corroboration_promoted = True
 
-    triage = await _triage(concerns, situation, person, now, language)
+    triage = await _triage(concerns, situation, person, now, language, layers=layers)
     decision.llm_powered = bool(triage)
 
     # LLM proposal (or deterministic fallback).

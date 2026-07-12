@@ -43,12 +43,20 @@ def generate(days: int = 30) -> list[EventCreate]:
         day = today - timedelta(days=d)
         is_weekend = day.weekday() >= 5
 
-        # Single clean daily routines (learn usual TIME).
-        events.append(_mk(day, "kettle_boil", 7, 30, 12))
-        events.append(_mk(day, "doorbell", 9, 0, 15))
-        events.append(_mk(day, "dishes", 21, 0, 20))
+        # Single clean daily routines (learn usual TIME). A full day of household
+        # rhythm — the more routines the engine learns, the more it can tell an
+        # EXPECTED sound from an UNUSUAL one.
+        events.append(_mk(day, "alarm_clock", 6, 45, 8))      # wake-up
+        events.append(_mk(day, "temple_bell", 6, 30, 12))     # morning aarti
+        events.append(_mk(day, "kettle_boil", 7, 30, 12))     # morning chai
+        events.append(_mk(day, "mixer_grinder", 8, 15, 15))   # breakfast prep
+        events.append(_mk(day, "doorbell", 9, 0, 15))         # milk / paper
+        events.append(_mk(day, "washing_machine", 10, 15, 20))  # laundry
+        events.append(_mk(day, "exhaust_fan", 12, 40, 20))    # lunch cooking
+        events.append(_mk(day, "tv_on", 21, 30, 25))          # evening viewing
+        events.append(_mk(day, "dishes", 21, 45, 20))         # after-dinner wash
         if not is_weekend:
-            events.append(_mk(day, "vacuum", 11, 0, 20))
+            events.append(_mk(day, "vacuum", 11, 0, 20))      # weekday cleaning
 
         # Pressure cooker: ~3 whistles per meal window → count baseline ≈ 3.
         for i in range(3):

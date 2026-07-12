@@ -57,11 +57,19 @@ const ROUTINE = [
 // left open far too long (safety-net) AND flagged as a security emergency when
 // it's night. Each corroborates the wellbeing concern.
 const HAZARDS = {
-  gas: { icon: "🔥", label: "Gas stove", note: "left on for an hour", device: "kitchen_gas_stove", onMin: -70, night: false },
-  water: { icon: "🚰", label: "Water motor", note: "overflowing the tank", device: "water_motor", onMin: -40, night: false },
-  door: { icon: "🚪", label: "Front door", note: "open — worse at night", device: "main_door", onMin: -800, night: true },
-  window: { icon: "🪟", label: "Bedroom window", note: "open — worse at night", device: "bedroom_window", onMin: -800, night: true },
+  gas: { icon: "🔥", label: "Gas stove", note: "left on for an hour", carry: "still burning", device: "kitchen_gas_stove", onMin: -70, night: false },
+  water: { icon: "🚰", label: "Water motor", note: "overflowing the tank", carry: "still running", device: "water_motor", onMin: -40, night: false },
+  door: { icon: "🚪", label: "Front door", note: "open — worse at night", carry: "still open", device: "main_door", onMin: -800, night: true },
+  window: { icon: "🪟", label: "Bedroom window", note: "open — worse at night", carry: "still open", device: "bedroom_window", onMin: -800, night: true },
 };
+
+// Human label for the routine step a person missed (medicine is person-specific).
+function missedLabel(missed, subject) {
+  if (!missed) return null;
+  if (missed === subject.medicine) return { icon: "💊", label: `${subject.name}'s medicine` };
+  const r = ROUTINE.find((x) => x.miss === missed);
+  return r ? { icon: r.icon, label: r.label } : null;
+}
 
 const LAYERS = [
   {
@@ -158,6 +166,7 @@ export default function Safety() {
   const [hazard, setHazard] = useState(null);     // hazard key chosen in Layer 2
   const [triggered, setTriggered] = useState(false);
   const [decision, setDecision] = useState(null);
+  const [history, setHistory] = useState({}); // step → decision (for the finale recap)
   const [verdict, setVerdict] = useState(null);
   const [busy, setBusy] = useState(false);
   const [checkBusy, setCheckBusy] = useState(false);
@@ -186,6 +195,7 @@ export default function Safety() {
     try {
       const d = await safetyApi.guardianAssess(HID, buildRequest(s, { person, clock, ...choices }));
       setDecision(d);
+      setHistory((h) => ({ ...h, [s]: d }));
       setTriggered(true);
       setConnected(true);
       speak(d?.spoken);
@@ -253,7 +263,7 @@ export default function Safety() {
     setTriggered(false);
     setDecision(null);
     setVerdict(null);
-    if (s === 0) { setMissed(null); setHazard(null); }
+    if (s <= 1) { setMissed(null); setHazard(null); setHistory({}); }
   }, []);
 
   const layerState = useMemo(() => {
@@ -293,33 +303,8 @@ export default function Safety() {
             window is fine at noon but unsafe at night). Always adjustable. */}
         {step >= 1 && <ClockBar clock={clock} onClock={setClock} subject={subject} />}
 
-        {/* Stepper — the three layers, always visible */}
-        <div className="flex items-stretch gap-2">
-          {LAYERS.map((l, i) => {
-            const ls = layerState[l.key];
-            const isCurrent = step === l.id;
-            const engaged = ls?.active;
-            const a = ACCENT[l.accent];
-            return (
-              <div key={l.key} className="flex flex-1 items-center gap-2">
-                <div className={["flex-1 rounded-xl border px-3 py-2.5 transition-all", isCurrent ? `${a.ring} ${a.bg}` : engaged ? "border-slate-600 bg-slate-800/40" : "border-slate-700/60 bg-slate-900/40"].join(" ")}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{l.icon}</span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-100">{l.name}</p>
-                      <p className="truncate text-[10px] text-slate-500">
-                        {engaged ? <span className={SEV_FILL[ls.severity] || "text-slate-400"}>● active</span>
-                          : isCurrent ? <span className={a.text}>▶ now</span> : "watching"}
-                      </p>
-                    </div>
-                    <span className="ml-auto text-[10px] font-bold text-slate-600">{l.id}</span>
-                  </div>
-                </div>
-                {i < LAYERS.length - 1 && <span className="text-slate-600">›</span>}
-              </div>
-            );
-          })}
-        </div>
+        {/* Layer board — the three layers, always visible, live from the engine */}
+        <LayerBoard step={step} layerState={layerState} assessment={triggered ? decision?.layers : null} />
 
         {/* Stage — the single focus */}
         <main className="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-6 sm:p-8">
@@ -342,6 +327,10 @@ export default function Safety() {
                 </div>
               </div>
 
+              {/* What earlier layers left open — the raw material corroboration
+                  works on ("no movement" + "gas on" = emergency). */}
+              {step >= 2 && <StillOpen subject={subject} missed={missed} hazard={step >= 3 ? hazard : null} />}
+
               {/* Interactive control per layer */}
               {step === 1 && <RoutinePicker subject={subject} missed={missed} onMiss={missRoutine} busy={busy} />}
               {step === 2 && <HazardPicker hazard={hazard} clock={clock} onPick={pickHazard} busy={busy} />}
@@ -363,7 +352,7 @@ export default function Safety() {
             </div>
           )}
 
-          {step === 4 && <Complete onReplay={() => goTo(1)} />}
+          {step === 4 && <Complete history={history} subject={subject} missed={missed} hazard={hazard} onReplay={() => goTo(1)} />}
         </main>
 
         {/* Guided navigation */}
@@ -386,7 +375,118 @@ export default function Safety() {
   );
 }
 
+/* ──────────────────────────────────────────────────────────── Layer board */
+
+// Severity-tinted chip styles for an ACTIVE layer (the current layer's accent
+// ring is used only while it's still clear).
+const SEV_RING = {
+  low: "border-sky-500/60 bg-sky-500/10",
+  medium: "border-amber-500/60 bg-amber-500/10",
+  high: "border-orange-500/60 bg-orange-500/10",
+  critical: "border-red-500/60 bg-red-500/10",
+};
+
+// The three layers as a live board: each chip mirrors the engine's per-layer
+// state, the "＋" between two lit chips shows them corroborating, and the bar
+// below is the engine's own cross-layer corroboration score + headline.
+function LayerBoard({ step, layerState, assessment }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-stretch gap-2">
+        {LAYERS.map((l, i) => {
+          const ls = layerState[l.key];
+          const next = layerState[LAYERS[i + 1]?.key];
+          const linked = ls?.active && next?.active;
+          const isCurrent = step === l.id;
+          const engaged = ls?.active;
+          const a = ACCENT[l.accent];
+          return (
+            <div key={l.key} className="flex flex-1 items-center gap-2">
+              <div
+                className={[
+                  "flex-1 rounded-xl border px-3 py-2.5 transition-all",
+                  engaged ? SEV_RING[ls.severity] || "border-slate-600 bg-slate-800/40"
+                    : isCurrent ? `${a.ring} ${a.bg}`
+                      : "border-slate-700/60 bg-slate-900/40",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{l.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-100">{l.name}</p>
+                    <p className="truncate text-[10px] text-slate-500">
+                      {engaged ? (
+                        <span className={SEV_FILL[ls.severity] || "text-slate-400"}>
+                          ● {ls.severity}{ls.concern_count > 1 ? ` · ${ls.concern_count} concerns` : ""}
+                        </span>
+                      ) : isCurrent ? <span className={a.text}>▶ now</span> : "watching"}
+                    </p>
+                  </div>
+                  <span className="ml-auto text-[10px] font-bold text-slate-600">{l.id}</span>
+                </div>
+              </div>
+              {i < LAYERS.length - 1 && (
+                linked
+                  ? <span className="animate-pulse text-base font-black text-amber-300" title="These layers corroborate each other">＋</span>
+                  : <span className="text-slate-600">›</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {assessment && <CorroborationBar a={assessment} />}
+    </div>
+  );
+}
+
+// The engine's cross-layer agreement, verbatim: its headline + 0..1 score.
+function CorroborationBar({ a }) {
+  const pct = Math.round((a.corroboration || 0) * 100);
+  const tone = a.corroborated_emergency
+    ? { box: "border-red-500/50 bg-red-500/10", text: "text-red-200", fill: "bg-red-400", icon: "⚡" }
+    : a.corroborated
+      ? { box: "border-amber-500/50 bg-amber-500/10", text: "text-amber-200", fill: "bg-amber-400", icon: "⚡" }
+      : a.active_layers > 0
+        ? { box: "border-slate-700/60 bg-slate-900/40", text: "text-slate-300", fill: "bg-sky-400", icon: "👁" }
+        : { box: "border-emerald-500/40 bg-emerald-500/5", text: "text-emerald-200", fill: "bg-emerald-400", icon: "✓" };
+  return (
+    <div className={["flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border px-3.5 py-2", tone.box].join(" ")}>
+      <p className={["text-xs font-semibold", tone.text].join(" ")}>{tone.icon} {a.headline}</p>
+      <div className="ml-auto flex w-44 items-center gap-2" title="How strongly the independent layers agree — computed by the engine">
+        <span className="text-[10px] uppercase tracking-wide text-slate-500">corroboration</span>
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-700/60">
+          <div className={["h-full rounded-full transition-all duration-700", tone.fill].join(" ")} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="font-mono text-[10px] text-slate-400">{pct}%</span>
+      </div>
+    </div>
+  );
+}
+
 /* ───────────────────────────────────────────────────── Interactive controls */
+
+// Chips for the concerns carried in from earlier layers — still unresolved, so
+// they corroborate whatever this layer adds.
+function StillOpen({ subject, missed, hazard }) {
+  const m = missedLabel(missed, subject);
+  const h = hazard ? HAZARDS[hazard] : null;
+  if (!m && !h) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Still open from earlier layers</span>
+      {m && (
+        <span className="rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-200">
+          🚶 {m.icon} {m.label} — still missed
+        </span>
+      )}
+      {h && (
+        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-200">
+          {h.icon} {h.label} — {h.carry}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function RoutinePicker({ subject, missed, onMiss, busy }) {
   // Only Ramesh/Saroja have a learned medicine routine; add it for them.
@@ -561,15 +661,61 @@ function Intro({ person, onPerson, onBegin }) {
   );
 }
 
-function Complete({ onReplay }) {
+// How the Guardian actually responded at each layer of THIS run.
+const MODE_BADGE = {
+  all_clear: { label: "🟢 all clear", cls: "bg-emerald-500/15 text-emerald-200" },
+  check_in: { label: "❔ gentle check-in", cls: "bg-amber-500/15 text-amber-200" },
+  auto_alarm: { label: "🚨 instant alarm", cls: "bg-red-500/20 text-red-200" },
+};
+
+function Complete({ history, subject, missed, hazard, onReplay }) {
+  const m = missedLabel(missed, subject);
+  const h = hazard ? HAZARDS[hazard] : null;
+  const rows = LAYERS.map((l) => {
+    const d = history[l.id];
+    if (!d) return null;
+    const what =
+      l.id === 1 ? (m ? `${m.icon} ${m.label} missed` : "routine missed")
+        : l.id === 2 ? (h ? `${h.icon} ${h.label} ${h.note}` : "hazard introduced")
+          : `🆘 SOS from ${subject.name}'s wearable`;
+    return { layer: l, d, what };
+  }).filter(Boolean);
+
   return (
-    <div className="flex flex-col items-center gap-4 py-8 text-center">
+    <div className="flex flex-col items-center gap-5 py-6 text-center">
       <span className="text-5xl">🛡️</span>
       <h2 className="text-2xl font-bold text-slate-100">Three layers, one guardian.</h2>
+
+      {/* The recap of what the Guardian actually did for {subject.name} */}
+      {rows.length > 0 && (
+        <div className="flex w-full max-w-xl flex-col gap-1.5 text-left">
+          {rows.map(({ layer, d, what }) => {
+            const badge = MODE_BADGE[d.mode] || MODE_BADGE.check_in;
+            const promoted = d.corroboration_promoted || (d.mode === "auto_alarm" && d.layers?.corroborated_emergency);
+            return (
+              <div key={layer.id} className="flex items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-800/40 px-3 py-2.5">
+                <span className="text-lg">{layer.icon}</span>
+                <div className="min-w-0 flex-1 leading-tight">
+                  <p className="text-xs font-bold text-slate-100">Layer {layer.id} · {layer.name}</p>
+                  <p className="truncate text-xs text-slate-400">{what}</p>
+                </div>
+                {promoted && (
+                  <span className="hidden rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200 sm:inline" title="Two independent layers agreeing raised this to an alarm">
+                    ⚡ layers agreed
+                  </span>
+                )}
+                <span className={["rounded-full px-2.5 py-1 text-xs font-bold", badge.cls].join(" ")}>{badge.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <p className="mx-auto max-w-xl text-base leading-relaxed text-slate-400">
-        A gentle nudge for a missed routine, a sharper response when a hazard corroborates it, and an instant alarm
-        when a vital signal fires. Independent layers that cross-check each other — so a single false signal never
-        cries wolf, and a real emergency is never missed.
+        The same guardian, three different voices: a gentle nudge when {subject.name} missed a routine, a hard
+        alarm the moment an independent hazard <span className="text-amber-300">corroborated</span> it, and an
+        instant response to an SOS. Layers that cross-check each other — one false signal never cries wolf, and
+        a real emergency is never missed.
       </p>
       <button onClick={onReplay} className="pp-btn rounded-lg px-5 py-2 text-sm font-semibold">↺ Play again</button>
     </div>
@@ -612,9 +758,42 @@ function LlmBadge({ on }) {
 
 /* ─────────────────────────────────────────────────────── Guardian response card */
 
+// Small facts about HOW the Guardian decided — triaged N→1, and how the
+// person's vulnerability escalated the flagged concern.
+function TriageChips({ decision }) {
+  const n = decision.all_concerns?.length || 0;
+  const fl = decision.flagged;
+  const escalated = fl?.base_severity && fl.base_severity !== fl.severity;
+  return (
+    <>
+      {n > 1 && (
+        <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300" title="The LLM ranked every open concern and acted on the single most dangerous one">
+          🔎 {n} concerns → acted on 1
+        </span>
+      )}
+      {escalated && (
+        <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300" title="Severity escalated because of who is home alone">
+          {fl.base_severity} → <span className={SEV_FILL[fl.severity]}>{fl.severity}</span>
+          {fl.vulnerability_factor ? ` · ×${fl.vulnerability_factor} vulnerable` : ""}
+        </span>
+      )}
+    </>
+  );
+}
+
 function GuardianResponse({ decision, verdict, checkBusy, recording, onRespond, onRecord }) {
   if (!decision) return null;
   const fl = decision.flagged;
+
+  if (decision.mode === "all_clear") {
+    return (
+      <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-5">
+        <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-xs font-bold uppercase text-emerald-200">🟢 All clear</span>
+        <p className="mt-2 rounded-lg bg-slate-950/40 px-3 py-2 text-base text-emerald-100">🔊 {decision.spoken}</p>
+        <p className="mt-2 text-xs text-slate-500">Nothing flags at this time of day — change the clock or the choice above to create a concern.</p>
+      </div>
+    );
+  }
 
   if (decision.mode === "auto_alarm") {
     return (
@@ -624,9 +803,16 @@ function GuardianResponse({ decision, verdict, checkBusy, recording, onRespond, 
           {decision.layers?.corroborated_emergency && (
             <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-200">⚡ layers agree</span>
           )}
+          <TriageChips decision={decision} />
           <LlmBadge on={decision.llm_powered} />
         </div>
         {fl && <p className="mt-2 text-base font-semibold text-slate-100">{fl.detail}</p>}
+        {decision.corroboration_promoted && (
+          <p className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+            ⚡ <span className="font-semibold">Neither signal alone was an emergency</span> — two independent
+            layers agreeing is what raised this alarm. That's the point of defence-in-depth.
+          </p>
+        )}
         <p className="mt-2 rounded-lg bg-slate-950/40 px-3 py-2 text-base text-red-100">🔊 {decision.spoken}</p>
         <WhyBlock text={decision.explanation} tone="alert" />
         {decision.family_message && (
@@ -643,6 +829,7 @@ function GuardianResponse({ decision, verdict, checkBusy, recording, onRespond, 
     <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-bold uppercase text-amber-200">❔ Checking in first</span>
+        <TriageChips decision={decision} />
         <LlmBadge on={decision.llm_powered} />
       </div>
       <p className="mt-2 rounded-lg bg-slate-950/40 px-3 py-2 text-base text-amber-100">🔊 {decision.checkin_prompt || decision.spoken}</p>

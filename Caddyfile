@@ -1,0 +1,33 @@
+{$SITE_ADDRESS} {
+	encode gzip
+
+	# WebSocket → orchestrator directly. The FastAPI gateway only proxies HTTP
+	# verbs (@app.api_route with GET/POST/...), so a WS upgrade cannot pass
+	# through it. Caddy handles the upgrade natively.
+	handle /live {
+		reverse_proxy orchestrator-service:8005
+	}
+
+	# The patterns and safety services expose IDENTICAL route prefixes
+	# (/events, /state, /patterns, /context), so they cannot share a path
+	# namespace. Each gets its own stripped prefix: handle_path removes /p and
+	# /s before forwarding, so /p/patterns/H001 → patterns-service:8003/patterns/H001.
+	handle_path /p/* {
+		reverse_proxy patterns-service:8003
+	}
+
+	handle_path /s/* {
+		reverse_proxy safety-service:8006
+	}
+
+	# Everything else API → the gateway, which fans out to mood, behavior,
+	# devices and orchestrate by the first path segment.
+	handle_path /api/* {
+		reverse_proxy gateway:8000
+	}
+
+	# Static SPA.
+	handle {
+		reverse_proxy frontend:80
+	}
+}

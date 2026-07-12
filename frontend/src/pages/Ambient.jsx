@@ -5,8 +5,8 @@ import AlexaNotification from "../components/patterns/AlexaNotification.jsx";
 // ════════════════════════════════════════════════════════════════════════════
 //  AMBIENT CONTEXT — "The Household Ear"
 //  ---------------------------------------------------------------------------
-//  Press LISTEN → the browser records a ~4s mic clip → it's sent to Google
-//  Gemini (an AUDIO-NATIVE LLM) which identifies ANY household sound in open
+//  Press LISTEN → the browser records a ~4s mic clip → it's sent to an
+//  AUDIO-NATIVE LLM which identifies ANY household sound in open
 //  vocabulary (pressure-cooker whistle, mixer-grinder, temple bell, baby crying)
 //  and reasons an action. When the sound matches a known routine, the backend
 //  overlays the DETERMINISTIC verified action + expected/unusual timing.
@@ -17,7 +17,9 @@ import AlexaNotification from "../components/patterns/AlexaNotification.jsx";
 // ════════════════════════════════════════════════════════════════════════════
 
 const HID = "AMB1";
-const ROSTER = ["father", "mother", "grandma", "baby"];
+// Who's home is fed to the interpreter as context (shapes e.g. an empty-house
+// glass-break vs. a daytime one) but is no longer a user-facing control.
+const PEOPLE_HOME = ["mother", "baby"];
 const TARGET_SR = 16000;
 
 const SEV = {
@@ -37,7 +39,16 @@ function nowHHMM() {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-// ── Audio helpers: record → 16k mono WAV → base64 (Gemini-friendly) ──────────
+function timeAgo(ts) {
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  return `${Math.round(m / 60)}h ago`;
+}
+
+// ── Audio helpers: record → 16k mono WAV → base64 (LLM-friendly) ─────────────
 function downsample(buf, from, to) {
   if (to >= from) return buf;
   const ratio = from / to;
@@ -85,12 +96,12 @@ export default function Ambient() {
   const [sounds, setSounds] = useState([]);
   const [routines, setRoutines] = useState([]);
   const [clock, setClock] = useState(nowHHMM());
-  const [people, setPeople] = useState(() => new Set(["mother", "baby"]));
   const [gasOn, setGasOn] = useState(true);
   const [feed, setFeed] = useState([]);
   const [listening, setListening] = useState(false);
   const [micStatus, setMicStatus] = useState("idle"); // idle | loading | listening | error
   const [analyzing, setAnalyzing] = useState(false);
+  const [heard, setHeard] = useState(false);           // gate tripped, capturing the sound's body
   const [level, setLevel] = useState(0);               // 0..1 VU meter
   const [toast, setToast] = useState(null);
   const [alexaQueue, setAlexaQueue] = useState([]);   // spoken Alexa narrations
@@ -106,10 +117,13 @@ export default function Ambient() {
   const audioCtxRef = useRef(null);
   const streamRef = useRef(null);
   const nodeRef = useRef(null);
+  const analyserRef = useRef(null);    // feeds the live spectrum ring
   const ringRef = useRef(null);        // rolling PCM buffer
   const ringWriteRef = useRef(0);
   const lastSendRef = useRef(0);       // cooldown clock (rate-limit safe)
   const sendingRef = useRef(false);
+  const heardTimerRef = useRef(null);  // pending body-capture timer
+  const noiseFloorRef = useRef(0.008); // adaptive room-noise estimate
   const levelRef = useRef(0);
   const levelTimerRef = useRef(null);
   const ctxDataRef = useRef({});       // latest house context for the callback
@@ -138,16 +152,17 @@ export default function Ambient() {
   const buildContext = useCallback(
     () => ({
       current_time: clock || undefined,
-      people_home: [...people],
+      people_home: [...PEOPLE_HOME],
       active_devices: gasOn ? ["kitchen_gas_stove"] : [],
       ingest: true,
     }),
-    [clock, people, gasOn],
+    [clock, gasOn],
   );
 
   const pushResult = useCallback((r) => {
     if (!r) return;
     r._id = `${Date.now()}-${r.sound}`;
+    r._at = Date.now();
     setFeed((f) => [r, ...f].slice(0, 30));
     if (r.recognised) loadRoutines();
     // Speak it aloud through the Alexa narrator (flags AND informational sounds).
@@ -182,7 +197,7 @@ export default function Ambient() {
   // Keep the latest house context available to the (long-lived) audio callback.
   useEffect(() => { ctxDataRef.current = buildContext(); }, [buildContext]);
 
-  // Analyse one captured clip with Gemini and surface the result.
+  // Analyse one captured clip with the audio LLM and surface the result.
   const analyzeClip = useCallback(async (float32, sr) => {
     setAnalyzing(true);
     try {
@@ -201,9 +216,9 @@ export default function Ambient() {
   }, [pushResult]);
   useEffect(() => { analyzeRef.current = analyzeClip; }, [analyzeClip]);
 
-  // ── Continuous listening: hear a real sound → capture → Gemini ────────────
+  // ── Continuous listening: hear a real sound → capture → audio LLM ─────────
   // Energy-gated with a cooldown so silence costs nothing and we never exceed
-  // Gemini's free-tier rate limit. Just play/make a sound — no clicking.
+  // the audio LLM's rate limit. Just play/make a sound — no clicking.
   const startListening = useCallback(async () => {
     setMicStatus("loading");
     let stream;
@@ -223,16 +238,27 @@ export default function Ambient() {
     ringWriteRef.current = 0;
 
     const source = ctx.createMediaStreamSource(stream);
+    // Analyser drives the live spectrum ring around the orb (60fps, no state).
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.72;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
     const node = ctx.createScriptProcessor(4096, 1, 1);
     nodeRef.current = node;
 
-    const ENERGY = 0.03;      // RMS gate — meaningful sound, not room hiss
-    const COOLDOWN = 6000;    // ms between sends (≤10/min → within free tier)
+    const COOLDOWN = 6000;     // ms between sends (≤10/min → within free tier)
     const CLIP_SECONDS = 3;
+    const BODY_DELAY = 1100;   // ms after the gate trips before capturing, so the
+                               // clip holds the sound's BODY, not just its onset —
+                               // markedly better identification.
+    noiseFloorRef.current = 0.008;
 
     node.onaudioprocess = (e) => {
       const input = e.inputBuffer.getChannelData(0);
       const ring = ringRef.current;
+      if (!ring) return;
       const N = ring.length;
       let w = ringWriteRef.current;
       let sumSq = 0;
@@ -246,15 +272,30 @@ export default function Ambient() {
       const rms = Math.sqrt(sumSq / input.length);
       levelRef.current = Math.max(rms, levelRef.current * 0.85);
 
+      // Adaptive gate: slow-follow the room's noise floor so a humming fan
+      // doesn't trigger constantly, while a quiet room stays sensitive.
+      const floor = noiseFloorRef.current;
+      if (rms < floor * 3) noiseFloorRef.current = floor * 0.98 + rms * 0.02;
+      const gate = Math.max(0.022, noiseFloorRef.current * 3.5);
+
       const now = Date.now();
-      if (rms > ENERGY && !sendingRef.current && now - lastSendRef.current > COOLDOWN) {
+      if (rms > gate && !sendingRef.current && now - lastSendRef.current > COOLDOWN) {
         sendingRef.current = true;
         lastSendRef.current = now;
-        const clipLen = Math.min(N, sr * CLIP_SECONDS);
-        const clip = new Float32Array(clipLen);
-        const start = (w - clipLen + N) % N;
-        for (let i = 0; i < clipLen; i++) clip[i] = ring[(start + i) % N];
-        analyzeRef.current(clip, sr);
+        setHeard(true);
+        // Let the sound develop, THEN slice the last CLIP_SECONDS from the ring
+        // (≈1.9s before the trigger + 1.1s after — onset AND body).
+        heardTimerRef.current = setTimeout(() => {
+          heardTimerRef.current = null;
+          setHeard(false);
+          const liveRing = ringRef.current;
+          if (!liveRing || !nodeRef.current) { sendingRef.current = false; return; }
+          const clipLen = Math.min(N, sr * CLIP_SECONDS);
+          const clip = new Float32Array(clipLen);
+          const start = (ringWriteRef.current - clipLen + N) % N;
+          for (let i = 0; i < clipLen; i++) clip[i] = liveRing[(start + i) % N];
+          analyzeRef.current(clip, sr);
+        }, BODY_DELAY);
       }
     };
     source.connect(node);
@@ -273,6 +314,7 @@ export default function Ambient() {
   const stopListening = useCallback(() => {
     try {
       if (levelTimerRef.current) clearInterval(levelTimerRef.current);
+      if (heardTimerRef.current) clearTimeout(heardTimerRef.current);
       nodeRef.current?.disconnect();
       audioCtxRef.current?.close();
       streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -280,11 +322,14 @@ export default function Ambient() {
       /* ignore */
     }
     levelTimerRef.current = null;
+    heardTimerRef.current = null;
     nodeRef.current = null;
+    analyserRef.current = null;
     audioCtxRef.current = null;
     streamRef.current = null;
     sendingRef.current = false;
     setLevel(0);
+    setHeard(false);
     setListening(false);
     setMicStatus("idle");
   }, []);
@@ -309,18 +354,12 @@ export default function Ambient() {
     } catch (e) { flash(`Seed failed: ${e.message}`); }
   }, [flash, loadRoutines]);
 
-  const togglePerson = (p) =>
-    setPeople((prev) => { const n = new Set(prev); n.has(p) ? n.delete(p) : n.add(p); return n; });
-
   const current = feed[0];
   const byCategory = useMemo(() => {
     const g = {};
     sounds.forEach((s) => (g[s.category] ||= []).push(s));
     return g;
   }, [sounds]);
-
-  const listenLabel = micStatus === "loading" ? "… starting"
-    : listening ? (analyzing ? "● hearing…" : "● Listening") : "🎙️ Listen";
 
   return (
     <div className="pp-app min-h-full" data-ptheme={theme}>
@@ -331,7 +370,7 @@ export default function Ambient() {
           <div className="leading-tight">
             <h1 className="text-base font-bold text-slate-100">Ambient Context · The Household Ear</h1>
             <p className="text-xs text-slate-400">
-              Hears a real sound → Gemini identifies it → context-aware action
+              Hears a real sound → Alexa identifies it → context-aware action
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -358,22 +397,6 @@ export default function Ambient() {
           </span>
           <input type="time" value={clock} onChange={(e) => setClock(e.target.value || nowHHMM())}
             className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-[var(--pp-accent)]" />
-          <button onClick={() => setGasOn((g) => !g)}
-            className={["rounded-lg border px-3 py-1.5 text-sm font-semibold transition",
-              gasOn ? "border-orange-400/60 bg-orange-500/20 text-orange-200" : "border-slate-700 bg-slate-800/60 text-slate-400"].join(" ")}>
-            🔥 Gas {gasOn ? "ON" : "off"}
-          </button>
-          <span className="ml-1 text-xs text-slate-500">Home:</span>
-          {ROSTER.map((p) => {
-            const on = people.has(p);
-            return (
-              <button key={p} onClick={() => togglePerson(p)}
-                className={["rounded-full px-2.5 py-1 text-xs font-medium capitalize",
-                  on ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40" : "bg-slate-700/40 text-slate-500"].join(" ")}>
-                {on ? "🟢" : "⚪"} {p}
-              </button>
-            );
-          })}
           <span className="ml-auto hidden items-center gap-1.5 text-xs text-slate-500 sm:flex" title="Nothing is recorded or stored; no speech is transcribed.">
             🔒 sound only · nothing stored
           </span>
@@ -382,33 +405,51 @@ export default function Ambient() {
         {/* ── Centre stage: the big Listen orb, like a voice-assistant simulator ── */}
         <section className="rounded-2xl border border-slate-700/60 bg-slate-900/50 px-4 py-10">
           <div className="flex flex-col items-center gap-5">
-            <div className="relative grid place-items-center">
-              {/* Reactive halo — grows with the live mic level while listening */}
+            <div className="relative grid h-56 w-56 place-items-center">
+              {/* Soft ripples while quietly listening (paused during analysis) */}
+              {listening && !analyzing && (
+                <>
+                  <span className="mic-ripple pointer-events-none absolute h-40 w-40 rounded-full border border-teal-400/35" />
+                  <span
+                    className="mic-ripple pointer-events-none absolute h-40 w-40 rounded-full border border-teal-400/20"
+                    style={{ animationDelay: "1.2s" }}
+                  />
+                </>
+              )}
+              {/* Live-level glow — a soft, level-reactive halo hugging the orb. */}
               {listening && (
                 <span
-                  className="pointer-events-none absolute h-48 w-48 rounded-full bg-teal-400/20"
+                  className="pointer-events-none absolute h-40 w-40 rounded-full bg-teal-400/25 blur-xl"
                   style={{
-                    transform: `scale(${1 + level * 0.7})`,
-                    opacity: 0.35 + level * 0.5,
-                    transition: "transform 120ms ease-out, opacity 120ms ease-out",
+                    transform: `scale(${1 + level * 0.45})`,
+                    opacity: 0.2 + level * 0.55,
+                    transition: "transform 140ms ease-out, opacity 140ms ease-out",
                   }}
                 />
               )}
-              {listening && (
-                <span className="pointer-events-none absolute h-44 w-44 animate-ping rounded-full bg-red-400/10" />
+              {/* Real-time spectrum ring — radial bars dancing to the live audio */}
+              {listening && <OrbVisualizer analyserRef={analyserRef} active={listening} />}
+              {/* "thinking" ring — a conic sweep orbiting the mic */}
+              {analyzing && (
+                <span className="mic-analyzing-ring pointer-events-none absolute h-44 w-44 rounded-full" />
               )}
               <button
                 onClick={listening ? stopListening : startListening}
                 disabled={micStatus === "loading"}
                 title={listening ? "Tap to stop listening" : "Tap to start listening"}
                 className={[
-                  "relative grid h-40 w-40 place-items-center rounded-full border-2 shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60",
+                  "mic-orb relative grid h-36 w-36 place-items-center rounded-full border-2 shadow-xl transition-all duration-500 disabled:cursor-not-allowed disabled:opacity-60",
+                  // `mic-breathe` animates transform, so it must yield to the
+                  // "heard" scale pop — they can't be applied together.
+                  heard ? "scale-110" : listening ? "mic-breathe" : "mic-idle-float",
                   listening
-                    ? "border-red-400/70 bg-red-500/15 text-red-200"
-                    : "border-teal-400/60 bg-teal-500/10 text-teal-200 hover:bg-teal-500/20",
+                    ? "mic-orb-listening border-teal-300/70 text-teal-100"
+                    : "border-teal-400/50 text-teal-200 hover:border-teal-300/80",
                 ].join(" ")}
               >
-                <span className="text-6xl leading-none">{listening ? "🔴" : "🎙️"}</span>
+                <span className="text-6xl leading-none transition-transform duration-300">
+                  {analyzing ? "🧠" : listening ? "👂" : "🎙️"}
+                </span>
               </button>
             </div>
 
@@ -416,47 +457,81 @@ export default function Ambient() {
               <p className="text-xl font-bold text-slate-100">
                 {micStatus === "loading"
                   ? "Starting mic…"
-                  : listening
-                    ? analyzing
-                      ? "Hearing a sound…"
-                      : "Listening…"
-                    : "Tap to Listen"}
+                  : analyzing
+                    ? "Identifying the sound…"
+                    : heard
+                      ? "Heard something…"
+                      : listening
+                        ? "Listening…"
+                        : "Tap to Listen"}
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                {listening
-                  ? "Play or make a household sound · tap the orb to stop"
-                  : "Play a real sound — or open ‘Trigger a sound’ below to simulate"}
+                {micStatus === "loading"
+                  ? "allow microphone access"
+                  : analyzing
+                    ? "Alexa is reasoning about what it heard"
+                    : heard
+                      ? "capturing the sound…"
+                      : listening
+                        ? "Play or make a household sound · tap the orb to stop"
+                        : "Play a real sound — or simulate one from the palette at the bottom"}
               </p>
             </div>
           </div>
 
-          {/* The interpretation appears here as a message, right under the orb */}
+          {/* The interpretation appears here as a message, right under the orb.
+              Keyed on the result id so a fresh sound re-plays the reveal. */}
           {current && (
-            <div className={["mx-auto mt-8 w-full max-w-3xl rounded-2xl border bg-slate-950/30 p-5", SEV[current.severity]?.ring || "border-slate-700/60"].join(" ")}>
+            <div
+              key={current._id}
+              className={["pp-rise mx-auto mt-8 w-full max-w-3xl rounded-2xl border bg-slate-950/40 p-5 shadow-lg", SEV[current.severity]?.ring || "border-slate-700/60"].join(" ")}
+            >
               <div className="flex items-start gap-4">
-                <span className="text-5xl leading-none">{current.emoji}</span>
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-slate-900/60 text-4xl leading-none">{current.emoji}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-slate-100">{current.detected_raw || current.label}</h2>
                     {current.flagged && <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-200">⚠ flagged</span>}
                     <span className={["rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", SEV[current.severity]?.badge].join(" ")}>{current.severity}</span>
                     {current.timing !== "new" && <span className={["rounded px-1.5 py-0.5 text-[10px] font-semibold", TIMING[current.timing]?.cls].join(" ")}>{TIMING[current.timing]?.label}</span>}
-                    {current.llm_powered && <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">🎧 heard by Gemini</span>}
+                    {current.llm_powered && <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">🎧 heard by Alexa</span>}
+                    {current.narration_llm && !current.llm_powered && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">✨ phrased by LLM</span>}
                   </div>
-                  {/* The spoken "Alexa" line — narration when the engine flagged it, else the base prompt. */}
-                  <p className="mt-2 text-base leading-relaxed text-slate-100">🔊 {current.narration || current.prompt}</p>
+                  {/* The spoken line — the home's voice. Given a quote treatment so
+                      it reads as the primary, "Alexa is speaking" response. */}
+                  <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3.5 py-2.5">
+                    <span className="mt-0.5 text-base">🔊</span>
+                    <p className="flex-1 text-base font-medium leading-relaxed text-slate-100">
+                      {current.narration || current.prompt}
+                    </p>
+                  </div>
                   {current.sense_reason && (
                     <p className="mt-2 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-sm text-amber-200/90">
                       🧠 Why flagged: {current.sense_reason}
-                      {current.narration_llm && <span className="ml-1 text-slate-500">· phrased by LLM</span>}
                     </p>
                   )}
-                  {current.likely_activity && <p className="mt-1 text-sm text-slate-400">🏠 {current.likely_activity}</p>}
-                  {current.routine_note && <p className="mt-1 text-sm text-slate-400">🕒 {current.routine_note}</p>}
+                  {(current.likely_activity || current.routine_note) && (
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                      {current.likely_activity && <span>🏠 {current.likely_activity}</span>}
+                      {current.routine_note && <span>🕒 {current.routine_note}</span>}
+                    </div>
+                  )}
+                  {typeof current.confidence === "number" && current.confidence > 0 && (
+                    <div className="mt-2.5 flex items-center gap-2 text-xs text-slate-500">
+                      <span className="uppercase tracking-wide">confidence</span>
+                      <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="pp-grow-bar h-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-400"
+                          style={{ width: `${Math.round(current.confidence * 100)}%` }}
+                        />
+                      </div>
+                      <span className="font-semibold text-teal-300">{Math.round(current.confidence * 100)}%</span>
+                    </div>
+                  )}
                   {current.suggested_action && !current._done && (
                     <div className="mt-3 flex items-center gap-2">
                       <button onClick={() => confirmAction(current)}
-                        className="rounded-lg border border-emerald-400/60 bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-200 hover:bg-emerald-500/25">
+                        className="rounded-lg border border-emerald-400/60 bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/25">
                         {current.suggested_action.requires_confirmation ? "✓ Confirm" : "▶"} {current.suggested_action.action} {current.suggested_action.device.replace(/_/g, " ")}
                       </button>
                       <span className="text-xs text-slate-500">{current.suggested_action.requires_confirmation ? "asks before acting" : "auto-action"}</span>
@@ -469,7 +544,82 @@ export default function Ambient() {
           )}
         </section>
 
-        {/* Trigger a sound — the simulate palette, collapsed until clicked */}
+        {/* Explore drawer — recent sounds + learned routines, collapsed by default */}
+        <ExploreDrawer
+          openKey={openSection}
+          onToggle={(k) => setOpenSection((cur) => (cur === k ? null : k))}
+          sections={[
+            {
+              key: "feed",
+              label: "Recent Sounds",
+              icon: "📜",
+              count: Math.max(0, feed.length - 1),
+              render: () =>
+                feed.length <= 1 ? (
+                  <p className="text-sm text-slate-500">Nothing yet — listen for a real sound, or trigger one from the palette at the bottom of the page.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1.5">
+                    {feed.slice(1).map((it) => (
+                      <li key={it._id} className={["pp-slide-in flex items-center gap-2 rounded-lg px-3 py-2", it.flagged ? "bg-amber-500/10 ring-1 ring-amber-500/30" : "bg-slate-950/40"].join(" ")}>
+                        <span className={["h-2 w-2 shrink-0 rounded-full", SEV[it.severity]?.dot].join(" ")} />
+                        <span className="text-base">{it.emoji}</span>
+                        <span className="shrink-0 text-sm text-slate-200">{it.detected_raw || it.label}</span>
+                        {it.flagged && <span className="text-xs text-amber-300">⚠</span>}
+                        <span className="ml-auto min-w-0 truncate text-xs text-slate-500">{it.narration || it.prompt}</span>
+                        {it._at && (
+                          <span className="shrink-0 text-[10px] font-medium tabular-nums text-slate-600">
+                            {timeAgo(it._at)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ),
+            },
+            {
+              key: "routines",
+              label: "Learned Routines",
+              icon: "🕒",
+              count: routines.length,
+              render: () =>
+                routines.length === 0 ? (
+                  <p className="text-sm text-slate-500">None yet — hit <span className="text-slate-300">Learn routines</span> in the header.</p>
+                ) : (
+                  <>
+                    <p className="mb-2 text-xs text-slate-500">
+                      Learned from ~30 days of listening. These let the home tell an
+                      <span className="text-emerald-300"> expected</span> sound from an
+                      <span className="text-amber-300"> unusual</span> one.
+                    </p>
+                    <RoutineTimeline routines={routines} />
+                    <ul className="grid gap-1.5 sm:grid-cols-2">
+                      {routines.map((r) => (
+                        <li key={r.sound} className="flex items-center gap-2.5 rounded-lg bg-slate-950/40 px-3 py-2 text-sm text-slate-300">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-900/60 text-base">{r.emoji}</span>
+                          <div className="min-w-0 flex-1 leading-tight">
+                            <p className="truncate font-medium text-slate-200">{r.label}</p>
+                            <p className="text-xs text-slate-500">
+                              ~{r.usual_time} · ±{r.window_minutes}m
+                              {r.occurrences ? ` · seen ${r.occurrences}×` : ""}
+                            </p>
+                          </div>
+                          <span
+                            className="shrink-0 rounded-full bg-teal-500/15 px-2 py-0.5 text-xs font-semibold text-teal-300"
+                            title="How consistent this routine's timing is"
+                          >
+                            {Math.round(r.confidence * 100)}%
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ),
+            },
+          ]}
+        />
+
+        {/* Trigger a sound — the simulate palette, parked at the very bottom as a
+            developer/demo fallback. Collapsed until clicked. */}
         <section className="overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/40">
           <button
             onClick={() => setSimOpen((o) => !o)}
@@ -479,7 +629,7 @@ export default function Ambient() {
             <span className="text-sm font-bold uppercase tracking-wide text-slate-300">
               Trigger a sound
             </span>
-            <span className="text-sm font-normal normal-case text-slate-500">· tap to simulate</span>
+            <span className="text-sm font-normal normal-case text-slate-500">· simulate without the mic</span>
             {sounds.length > 0 && (
               <span className="rounded-full bg-slate-700/70 px-1.5 text-xs font-bold text-slate-300">
                 {sounds.length}
@@ -506,57 +656,6 @@ export default function Ambient() {
           )}
         </section>
 
-        {/* Explore drawer — recent sounds + learned routines, collapsed by default */}
-        <ExploreDrawer
-          openKey={openSection}
-          onToggle={(k) => setOpenSection((cur) => (cur === k ? null : k))}
-          sections={[
-            {
-              key: "feed",
-              label: "Recent Sounds",
-              icon: "📜",
-              count: Math.max(0, feed.length - 1),
-              render: () =>
-                feed.length <= 1 ? (
-                  <p className="text-sm text-slate-500">Nothing yet — trigger a sound above.</p>
-                ) : (
-                  <ul className="flex flex-col gap-1.5">
-                    {feed.slice(1).map((it) => (
-                      <li key={it._id} className={["flex items-center gap-2 rounded-lg px-3 py-2", it.flagged ? "bg-amber-500/10 ring-1 ring-amber-500/30" : "bg-slate-950/40"].join(" ")}>
-                        <span className={["h-2 w-2 shrink-0 rounded-full", SEV[it.severity]?.dot].join(" ")} />
-                        <span className="text-base">{it.emoji}</span>
-                        <span className="text-sm text-slate-200">{it.detected_raw || it.label}</span>
-                        {it.flagged && <span className="text-xs text-amber-300">⚠</span>}
-                        <span className="ml-auto truncate text-xs text-slate-500">{it.narration || it.prompt}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ),
-            },
-            {
-              key: "routines",
-              label: "Learned Routines",
-              icon: "🕒",
-              count: routines.length,
-              render: () =>
-                routines.length === 0 ? (
-                  <p className="text-sm text-slate-500">None yet — hit <span className="text-slate-300">Learn routines</span> in the header.</p>
-                ) : (
-                  <ul className="grid gap-1.5 sm:grid-cols-2">
-                    {routines.map((r) => (
-                      <li key={r.sound} className="flex items-center gap-2 rounded-lg bg-slate-950/40 px-3 py-2 text-sm text-slate-300">
-                        <span className="text-base">{r.emoji}</span>
-                        <span className="flex-1 truncate">{r.label}</span>
-                        <span className="font-mono text-slate-400">~{r.usual_time}</span>
-                        <span className="text-xs text-slate-500">{Math.round(r.confidence * 100)}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                ),
-            },
-          ]}
-        />
-
         {toast && (
           <div className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl bg-slate-800/95 px-4 py-2 text-sm font-medium text-white shadow-xl ring-1 ring-slate-600">
             {toast}
@@ -571,6 +670,133 @@ export default function Ambient() {
           maxVisible={3}
           autoExpandDetails
         />
+      </div>
+    </div>
+  );
+}
+
+// ── Live spectrum ring ───────────────────────────────────────────────────────
+// A canvas ring of radial frequency bars around the orb, driven straight from
+// the WebAudio AnalyserNode at 60fps — no React state per frame, so it stays
+// perfectly smooth. Bars ease toward the live spectrum for a liquid feel.
+function OrbVisualizer({ analyserRef, active }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const SIZE = 224;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = SIZE * dpr;
+    canvas.height = SIZE * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const BARS = 56;
+    const smoothed = new Float32Array(BARS);
+    let data = null;
+    let raf;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      const analyser = analyserRef.current;
+      if (active && analyser) {
+        if (!data || data.length !== analyser.frequencyBinCount) {
+          data = new Uint8Array(analyser.frequencyBinCount);
+        }
+        analyser.getByteFrequencyData(data);
+      }
+      const cx = SIZE / 2;
+      const cy = SIZE / 2;
+      const r0 = 80;
+      let any = false;
+      for (let i = 0; i < BARS; i++) {
+        // Sample the lower ~70% of bins — where household sounds live.
+        let v = 0;
+        if (active && data) {
+          const idx = Math.floor((i / BARS) * data.length * 0.7);
+          v = data[idx] / 255;
+        }
+        smoothed[i] += (v - smoothed[i]) * 0.25; // ease toward live value
+        if (smoothed[i] > 0.004) any = true;
+        const len = 2 + smoothed[i] * 26;
+        const ang = (i / BARS) * Math.PI * 2 - Math.PI / 2;
+        ctx.strokeStyle = `rgba(45, 212, 191, ${0.22 + smoothed[i] * 0.78})`;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+        ctx.lineTo(cx + Math.cos(ang) * (r0 + len), cy + Math.sin(ang) * (r0 + len));
+        ctx.stroke();
+      }
+      // Keep animating while active, or while bars are still decaying to rest.
+      if (active || any) raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [active, analyserRef]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      style={{ width: 224, height: 224 }}
+      aria-hidden
+    />
+  );
+}
+
+// ── 24-hour routine timeline ────────────────────────────────────────────────
+// The learned sound routines laid out on a day strip — at a glance you can see
+// the home's acoustic rhythm and where "now" sits inside it. Markers alternate
+// above/below the baseline so close routines don't collide.
+function RoutineTimeline({ routines }) {
+  const toMin = (hhmm) => {
+    const [h, m] = String(hhmm).split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const now = new Date();
+  const nowPct = ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100;
+  const sorted = [...routines].sort((a, b) => toMin(a.usual_time) - toMin(b.usual_time));
+
+  return (
+    <div className="mb-3 rounded-xl border border-slate-700/50 bg-slate-950/40 px-3 pb-1.5 pt-3">
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        The home's daily sound rhythm
+      </p>
+      <div className="relative mx-2 h-[72px]">
+        {/* baseline + hour ticks */}
+        <div className="absolute inset-x-0 top-1/2 h-px bg-slate-700/70" />
+        {[0, 3, 6, 9, 12, 15, 18, 21, 24].map((h) => (
+          <div
+            key={h}
+            className="absolute top-1/2 h-2 w-px -translate-y-1/2 bg-slate-600/80"
+            style={{ left: `${(h / 24) * 100}%` }}
+          />
+        ))}
+        {/* "now" marker */}
+        <div
+          className="tl-now absolute inset-y-0 w-0.5 rounded bg-[var(--pp-accent)]"
+          style={{ left: `${nowPct}%` }}
+          title={`Now · ${nowHHMM()}`}
+        />
+        {/* routine markers, alternating above/below the line */}
+        {sorted.map((r, i) => (
+          <span
+            key={r.sound}
+            title={`${r.label} · usually ~${r.usual_time} (±${r.window_minutes}m)`}
+            className="absolute grid h-8 w-8 -translate-x-1/2 cursor-default place-items-center rounded-full border border-teal-500/40 bg-slate-900 text-base shadow-md transition-transform hover:z-10 hover:scale-125"
+            style={{
+              left: `${(toMin(r.usual_time) / 1440) * 100}%`,
+              ...(i % 2 === 0 ? { top: 0 } : { bottom: 0 }),
+            }}
+          >
+            {r.emoji}
+          </span>
+        ))}
+      </div>
+      <div className="mx-2 flex justify-between text-[10px] text-slate-500">
+        <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
       </div>
     </div>
   );

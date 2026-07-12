@@ -44,17 +44,17 @@ export default function Layout() {
       "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm",
       collapsed ? "lg:justify-center lg:px-2" : "",
       isActive
-        ? "bg-indigo-600 text-white"
-        : "text-gray-400 hover:text-white hover:bg-gray-800",
+        ? "bg-[var(--pp-accent)] text-[#131a22] font-semibold shadow-sm"
+        : "text-[var(--pp-muted)] hover:text-[var(--pp-text)] hover:bg-[var(--pp-surface-2)]",
     ].join(" ");
 
   const mobileLink = ({ isActive }) =>
     `flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors text-[10px] font-medium ${
-      isActive ? "text-indigo-400" : "text-gray-500 hover:text-gray-300"
+      isActive ? "text-[var(--pp-accent-text)]" : "text-[var(--pp-subtle)] hover:text-[var(--pp-text-2)]"
     }`;
 
   return (
-    <div className="min-h-screen flex bg-gray-950">
+    <div className="min-h-screen flex bg-[#131a22]">
 
       {/* ── Mobile overlay when drawer is open ────────────────────────────── */}
       {sidebarOpen && (
@@ -64,11 +64,14 @@ export default function Layout() {
         />
       )}
 
-      {/* ── Sidebar (desktop: collapsible rail · mobile: slide-in drawer) ──── */}
+      {/* ── Sidebar (desktop: collapsible rail · mobile: slide-in drawer) ────
+          `data-ptheme="dark"` scopes the Amazon (Squid Ink + Orange) palette
+          variables to the chrome without remapping the page content. */}
       <aside
+        data-ptheme="dark"
         className={[
           "fixed inset-y-0 left-0 z-30 flex flex-col w-64",
-          "bg-gray-900 border-r border-gray-800 p-6",
+          "bg-[var(--pp-surface)] border-r border-[var(--pp-border)] p-6",
           "transition-all duration-300 ease-in-out",
           // On desktop always show; on mobile slide in/out
           "lg:static lg:translate-x-0 lg:z-auto",
@@ -88,7 +91,7 @@ export default function Layout() {
           {/* Desktop collapse / expand toggle (burger) */}
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className="hidden lg:flex items-center justify-center shrink-0 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            className="hidden lg:flex items-center justify-center shrink-0 p-1.5 rounded-md text-[var(--pp-muted)] hover:text-[var(--pp-text)] hover:bg-[var(--pp-surface-2)] transition-colors"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={collapsed ? "Expand menu" : "Collapse menu"}
           >
@@ -103,17 +106,17 @@ export default function Layout() {
               className="h-8 w-8 shrink-0"
             />
             <div className={`min-w-0 ${hideOnCollapse}`}>
-              <h1 className="text-lg font-bold text-white leading-tight">
+              <h1 className="text-lg font-bold text-[var(--pp-text)] leading-tight">
                 Awaas AI
               </h1>
-              <p className="text-[13px] text-gray-500">Powered by Amazon Alexa</p>
+              <p className="text-[13px] text-[var(--pp-subtle)]">Powered by Amazon Alexa</p>
             </div>
           </div>
 
           {/* Mobile drawer close */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden ml-auto text-gray-500 hover:text-white p-1 rounded-md"
+            className="lg:hidden ml-auto text-[var(--pp-subtle)] hover:text-[var(--pp-text)] p-1 rounded-md"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -138,13 +141,13 @@ export default function Layout() {
         </nav>
 
         {/* Footer */}
-        <div className="mt-auto pt-4 border-t border-gray-800 space-y-3">
+        <div className="mt-auto pt-4 border-t border-[var(--pp-border)] space-y-3">
           <div className={hideOnCollapse}>
             <LanguageSelect />
           </div>
           {user && (
             <p
-              className={`text-xs text-gray-400 truncate ${hideOnCollapse}`}
+              className={`text-xs text-[var(--pp-muted)] truncate ${hideOnCollapse}`}
               title={user.email}
             >
               {user.email}
@@ -155,7 +158,7 @@ export default function Layout() {
             title={collapsed ? "Sign Out" : undefined}
             className={[
               "flex items-center gap-2 w-full px-4 py-2 rounded-lg",
-              "text-gray-400 hover:text-red-400 hover:bg-gray-800",
+              "text-[var(--pp-muted)] hover:text-[var(--pp-danger)] hover:bg-[var(--pp-surface-2)]",
               "transition-colors text-sm",
               collapsed ? "lg:justify-center lg:px-2" : "",
             ].join(" ")}
@@ -163,7 +166,7 @@ export default function Layout() {
             <LogOut className="w-4 h-4 shrink-0" />
             <span className={hideOnCollapse}>Sign Out</span>
           </button>
-          <p className={`text-xs text-gray-600 ${hideOnCollapse}`}>
+          <p className={`text-xs text-[var(--pp-subtle)] ${hideOnCollapse}`}>
             Powered by Nvidia Nemotron on AWS Bedrock
           </p>
         </div>
@@ -173,10 +176,10 @@ export default function Layout() {
       <div className="flex flex-col flex-1 min-w-0">
 
         {/* Mobile top bar */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-gray-800 shrink-0">
+        <header data-ptheme="dark" className="lg:hidden flex items-center gap-3 px-4 py-3 bg-[var(--pp-surface)] border-b border-[var(--pp-border)] shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white p-1 rounded-md"
+            className="text-[var(--pp-muted)] hover:text-[var(--pp-text)] p-1 rounded-md"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
@@ -187,7 +190,7 @@ export default function Layout() {
               alt="Amazon Alexa"
               className="h-6 w-6 shrink-0"
             />
-            <span className="text-sm font-bold text-white">Awaas AI</span>
+            <span className="text-sm font-bold text-[var(--pp-text)]">Awaas AI</span>
           </div>
         </header>
 
@@ -197,8 +200,8 @@ export default function Layout() {
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-10 flex items-center justify-around
-                        bg-gray-900 border-t border-gray-800 px-2 py-1 safe-area-bottom">
+        <nav data-ptheme="dark" className="lg:hidden fixed bottom-0 inset-x-0 z-10 flex items-center justify-around
+                        bg-[var(--pp-surface)] border-t border-[var(--pp-border)] px-2 py-1 safe-area-bottom">
           {NAV_ITEMS.map(({ to, label, Icon }) => (
             <NavLink
               key={to}

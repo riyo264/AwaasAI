@@ -1,0 +1,122 @@
+# Production stack: single box, one public domain, auto-HTTPS via Caddy.
+# Nothing is published except Caddy's 80/443 — every service talks over the
+# internal compose network. Run with:
+#   docker compose -f docker-compose.prod.yml up -d --build
+services:
+  # DynamoDB Local, but PERSISTED (dev uses -inMemory, which loses everything
+  # on restart). Keeps the whole system free of a real AWS DynamoDB dependency.
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+    user: root
+    volumes:
+      - dynamodb-data:/data
+    restart: unless-stopped
+
+  gateway:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      - MOOD_SERVICE_URL=http://mood-service:8001
+      - BEHAVIOR_SERVICE_URL=http://behavior-service:8002
+      - PATTERNS_SERVICE_URL=http://patterns-service:8003
+      - DEVICES_SERVICE_URL=http://devices-service:8004
+      - ORCHESTRATOR_SERVICE_URL=http://orchestrator-service:8005
+      - SAFETY_SERVICE_URL=http://safety-service:8006
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+    depends_on:
+      - mood-service
+      - behavior-service
+      - patterns-service
+      - devices-service
+      - orchestrator-service
+      - safety-service
+
+  mood-service:
+    build: ./backend
+    env_file: ./backend/.env
+    command: uvicorn services.mood.main:app --host 0.0.0.0 --port 8001
+    restart: unless-stopped
+
+  behavior-service:
+    build: ./backend
+    env_file: ./backend/.env
+    command: uvicorn services.behavior.main:app --host 0.0.0.0 --port 8002
+    restart: unless-stopped
+
+  patterns-service:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+    command: uvicorn patterns.app.main:app --host 0.0.0.0 --port 8003
+    restart: unless-stopped
+    depends_on:
+      - dynamodb-local
+
+  safety-service:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+    command: uvicorn safety.app.main:app --host 0.0.0.0 --port 8006
+    restart: unless-stopped
+    depends_on:
+      - dynamodb-local
+
+  devices-service:
+    build: ./backend
+    env_file: ./backend/.env
+    command: uvicorn services.devices.main:app --host 0.0.0.0 --port 8004
+    restart: unless-stopped
+
+  orchestrator-service:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      - MOOD_SERVICE_URL=http://mood-service:8001
+      - BEHAVIOR_SERVICE_URL=http://behavior-service:8002
+      - PATTERNS_SERVICE_URL=http://patterns-service:8003
+      - DEVICES_SERVICE_URL=http://devices-service:8004
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+    command: uvicorn services.orchestrator.main:app --host 0.0.0.0 --port 8005
+    restart: unless-stopped
+    depends_on:
+      - dynamodb-local
+
+  # Static SPA. The VITE_* values are baked in at build time and must match the
+  # paths Caddy exposes, so a domain change means a rebuild of this image.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_BASE_URL=https://${DOMAIN}/api
+        - VITE_WS_URL=wss://${DOMAIN}/live
+        - VITE_PATTERNS_API_BASE=https://${DOMAIN}/p
+        - VITE_SAFETY_API_BASE=https://${DOMAIN}/s
+        - VITE_COGNITO_USER_POOL_ID=${VITE_COGNITO_USER_POOL_ID}
+        - VITE_COGNITO_APP_CLIENT_ID=${VITE_COGNITO_APP_CLIENT_ID}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - SITE_ADDRESS=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+    depends_on:
+      - gateway
+      - frontend
+
+volumes:
+  dynamodb-data:
+  caddy-data:
+  caddy-config:

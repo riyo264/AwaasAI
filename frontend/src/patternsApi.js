@@ -148,7 +148,7 @@ export const api = {
   // The learned daily routine with the active occasion overlay applied.
   effectiveSchedule: (householdId) =>
     request(`/context/${householdId}/effective-schedule`),
-  // Send a recorded mic clip to the audio LLM (Gemini) for open-vocab detection.
+  // Send a recorded mic clip to the audio LLM for open-vocab detection.
   ambientListen: (householdId, body) =>
     request(`/ambient/${householdId}/listen`, {
       method: "POST",

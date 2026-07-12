@@ -278,6 +278,187 @@
     animation: ppSpin 1.1s linear infinite;
 }
 
+/* ── Ambient "Household Ear" mic orb ──────────────────────────────────────
+   A clean voice-assistant orb: concentric ripples radiate outward while
+   listening, the orb breathes gently, and idle it floats. The live mic level
+   is layered on top via an inline transform, so this stays calm and smooth. */
+@keyframes micRipple {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(2.1);
+        opacity: 0;
+    }
+}
+
+.mic-ripple {
+    animation: micRipple 2.4s cubic-bezier(0.16, 0.8, 0.3, 1) infinite;
+}
+
+@keyframes micBreathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.045);
+    }
+}
+
+.mic-breathe {
+    animation: micBreathe 3.2s ease-in-out infinite;
+}
+
+@keyframes micIdleFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.mic-idle-float {
+    animation: micIdleFloat 4s ease-in-out infinite;
+}
+
+/* Orb surface — layered radial gradients give the button real depth instead of
+   a flat fill; the listening variant adds a soft outer aura + inner rim light. */
+.mic-orb {
+    background:
+        radial-gradient(circle at 32% 28%, rgba(45, 212, 191, 0.30), rgba(15, 23, 42, 0.10) 60%),
+        radial-gradient(circle at 70% 78%, rgba(34, 211, 238, 0.18), transparent 55%);
+}
+
+.mic-orb-listening {
+    box-shadow:
+        0 0 46px -8px rgba(45, 212, 191, 0.50),
+        inset 0 0 32px -14px rgba(94, 234, 212, 0.45);
+}
+
+/* "identifying" ring — a conic sweep masked down to a thin ring that
+   orbits the mic while the audio LLM reasons about the clip. */
+.mic-analyzing-ring {
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(34, 211, 238, 0) 210deg,
+            rgba(34, 211, 238, 0.95) 320deg,
+            transparent 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    animation: ppSpin 0.9s linear infinite;
+}
+
+/* Alexa notification "speaking" pulse + the little TTS equalizer bars.
+   (Referenced by AlexaNotification — previously undefined, so invisible.) */
+@keyframes alexaPing {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55);
+    }
+
+    100% {
+        box-shadow: 0 0 0 14px rgba(56, 189, 248, 0);
+    }
+}
+
+.alexa-ping {
+    animation: alexaPing 1.2s ease-out infinite;
+}
+
+@keyframes ttsBounce {
+
+    0%,
+    100% {
+        transform: scaleY(0.35);
+    }
+
+    50% {
+        transform: scaleY(1);
+    }
+}
+
+.tts-bar {
+    transform-origin: center;
+    animation: ttsBounce 0.9s ease-in-out infinite;
+}
+
+.tts-bar-2 {
+    animation-delay: 0.15s;
+}
+
+.tts-bar-3 {
+    animation-delay: 0.3s;
+}
+
+/* Feed rows slide in from the left as new sounds arrive */
+@keyframes ppSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.pp-slide-in {
+    animation: ppSlideIn 0.3s ease both;
+}
+
+/* Meter bars grow from zero to their inline width on reveal */
+@keyframes ppGrowBar {
+    from {
+        width: 0;
+    }
+}
+
+.pp-grow-bar {
+    animation: ppGrowBar 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* "Now" marker on the 24h routine timeline */
+@keyframes tlNowPulse {
+
+    0%,
+    100% {
+        opacity: 0.95;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}
+
+.tl-now {
+    animation: tlNowPulse 2s ease-in-out infinite;
+}
+
+/* Accessibility: respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .mic-ripple,
+    .mic-breathe,
+    .mic-idle-float,
+    .mic-analyzing-ring,
+    .alexa-ping,
+    .tts-bar,
+    .anomaly-pulse,
+    .tl-now,
+    .pp-thinking-halo {
+        animation: none !important;
+    }
+}
+
 /* Theme-aware scrollbars */
 ::-webkit-scrollbar {
     width: 8px;

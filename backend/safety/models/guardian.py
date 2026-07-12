@@ -40,6 +40,9 @@ class GuardianDecision(BaseModel):
     all_concerns: list[GuardianConcern] = Field(default_factory=list)
     # Defense-in-depth: the three-layer view + cross-layer corroboration.
     layers: LayeredAssessment | None = None
+    # True when NO single concern was extreme, but two independent layers
+    # agreeing promoted the worst one to an auto-alarm (the multi-layer payoff).
+    corroboration_promoted: bool = False
     safety_status: str = "safe"
     safety_score: float = 100.0
     llm_powered: bool = False
